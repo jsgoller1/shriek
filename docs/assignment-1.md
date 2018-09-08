@@ -1,0 +1,126 @@
+## Statement (of the problem)
+
+Build a local key value store that supports:
+- Setting a value for a key in a REPL
+- Persisting that data to disk
+- Retrieving the data again by key.
+- Multiple local “clients” operating on the same data store.
+
+---
+## Understand / Plan
+We will start with the last item first, as it impacts the rest
+of the requirements. In order to support multiple "concurrent"
+clients, we will implement shriek initially as a client-server
+model using BSD sockets. The `man` page for `accept()` dictates
+that the operating system queues pending connections to the same
+port, so we should be able to support multiple clients reading/writing
+to the same server (obviously they will race, but the system
+will not crash when they do).
+
+### Client
+**REPL**
+
+A REPL is a pretty simple programming construct - all we need
+is a `while` loop that watches for input and exits when specific
+input is given. In the REPL, we can limit ourselves to matching on the
+following operations, responding with `invalid operation` for anything else:
+- `get <key>`: read a key's value
+- `set <key> <value>`: write a key
+- `exit`: exit the REPL
+As a stretch goal (only after `get` and `set` are implemented), we can also implement:
+- `persist`: force shriek to write all entries to file
+- `unset <key>`: remove a key
+- `list`: show all keys and their values
+
+pseudocode:
+```
+while(input = get_line()) {
+  i = 0
+  skip non-whitespace in line, i++
+  replace i with \0, i++
+  strcmp() input with valid options
+    handle get
+      remainder of input is key, client_lookup(key)
+    handle set
+      keyname_i = i
+      skip non-whitespace in line, i++
+      replace i with \0, i++
+      client_install(input[keyname_i], input[i])
+    handle unset
+      keyname_i = i
+      skip non-whitespace in line, i++
+      replace i with \0, i++
+      client_unset(input[keyname_i])
+    handle list
+      client_list()
+    persist
+      client_persist()
+    handle exit
+      break
+    else
+      print(invalid)
+}
+```
+
+For each of the `client_*` functions, the client writes
+the data to the following packet format:
+```
+ACTION (4 bytes)
+KEY_SIZE (4 bytes)
+VAL_SIZE (4 bytes)
+KEY (optional, KEY_SIZE bytes)
+VAL (optional, VAL_SIZE bytes)
+```
+The client then sends the packet to the server; if the
+server replies with `OK`, this is printed.
+
+### Server
+**Setting / Retrieving data**
+The server sits in loop listening for incoming connections.
+When a connection is made, it fetches data from the socket
+that is in the above mentioned format. It is then parsed:
+```
+while(input = get_line_from_socket()) {
+  i = 0
+  fields = atoi(input[i])
+  if fields > 3
+    reply with error and continue
+  else
+    size = parse next two bytes from i
+  action = input[i+size]
+  strcmp(action) with following strings:
+    get
+      parse remainder of input as key
+      return get(key)
+    set
+      parse next field as key
+      parse remainder as value
+      set(key, value)
+    unset
+      parse next field as key
+      invalidate(key)
+    list
+      walk entire table, returning each entry to client
+    persist
+      walk entire table, writing each entry to file.
+      return
+    else
+      print(invalid)
+}
+```
+
+The `get()` and `set()` functions handle storing and fetching the data. Data is stored in-memory in a hash
+table of pointers, where keys are hashed using [Bernstein's djb2](http://www.cse.yorku.ca/~oz/hash.html).
+Each pointer points to a key/value/next struct, and the list is walked when hash collisions occur.
+
+**Persistence to disk**
+Data is stored in a file on disk, in the format `<key>\0\val\n`. A function `disk_dump()` walks every entry in the table, writing it to disk.
+
+---
+## Execute
+
+Pull request in progress.
+---
+## Review
+
+Forthcoming.

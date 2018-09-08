@@ -52,4 +52,5 @@ Mkfile.old
 dkms.conf
 
 # Binaries
+serialized_data.bin
 bin/*
