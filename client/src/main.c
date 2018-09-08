@@ -1,38 +1,61 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
-static int get_handler(char* const line) {}
+#include "client.h"
 
-static int set_handler(char* const line) {}
+static int get_handler(const char* const key) {
+  printf("Getting %s\n", key);
+  return 0;
+}
 
-static int exit_handler(char* const line) {}
+static int set_handler(const char* const key, const char* const value) {
+  printf("Setting %s = %s\n", key, value);
+  return 0;
+}
 
-int main(int argc, char** argv) {
-  size_t rsize = 0;
+int main() {
+  ssize_t rsize = 0;
   size_t line_size = 1000;
   char* linep = malloc(sizeof(char) * line_size);
   if (linep == NULL) {
     printf("main() | cannot read commands. Quitting...");
+    return -1;
+  }
+
+  char* key = malloc(sizeof(char) * MAX_KEY_SIZE);
+  if (key == NULL) {
+    printf("main() | cannot read commands. Quitting...");
+    free(linep);
+    return -1;
+  }
+
+  char* value = malloc(sizeof(char) * MAX_VAL_SIZE);
+  if (value == NULL) {
+    printf("main() | cannot read commands. Quitting...");
+    free(linep);
+    free(key);
+    return -1;
   }
 
   printf("> ");
-  while (rsize = getline(&linep, &line_size, stdin != -1)) {
-    /*
-    // Prepare string for command parsing
-    int i;
-    for (i = 0; linep[i] != ' ' && i < line_size; i++) {
+  while ((rsize = getline(&linep, &line_size, stdin)) != -1) {
+    // TODO: the below can overflow the max key size / max val size
+    if (sscanf(linep, "get %s", key, value) == 1) {
+      get_handler(key);
+    } else if (sscanf(linep, "set %s %s", key, value) == 2) {
+      set_handler(key, value);
+    } else if (strcmp(linep, "exit") == 0) {
+      printf("Quitting...");
+      break;
+    } else {
+      printf("Invalid command.\n");
     }
-    if (i != line_size) {
-      linep[i] = '\0';
-    }
-    */
-
-    if (sscanf("get %s %s", linep)) {
-    } else if ((sscanf("set %s %s", linep)) {
-    } else if (strcmp(linep, "exit") {
-    } else
-
     printf("> ");
   }
+
+  free(linep);
+  free(key);
+  free(value);
   return 0;
 }
