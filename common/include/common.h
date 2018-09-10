@@ -32,16 +32,18 @@ typedef struct net_config {
 ssize_t connect_to_server(net_config* const config);
 char* send_data(const net_config* const config,
                 const serialized_message* const s_message);
+serialized_message* recv_data(const net_config* const config);
 ssize_t disconnect(const net_config* const config);
 
 // serialization.c
 serialized_message* serialize(const message* const message_data);
-message* deserialize(const char* const serialized_message);
+message* deserialize(const serialized_message* const s_message);
 
 // messages.c
 message* create_message(enum action_type action, const char* const key,
                         const char* const val);
-ssize_t send_message(const net_config* const config_data,
+ssize_t send_message(const net_config* const config,
                      const enum action_type action, const char* const key,
                      const char* const value);
+message* listen_for_messages(const net_config* const config);
 void free_message(message* message_data);

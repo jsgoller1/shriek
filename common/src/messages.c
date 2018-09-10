@@ -59,6 +59,18 @@ ssize_t send_message(const net_config* const config_data,
   return 0;
 }
 
+message* listen_for_messages(const net_config* const config) {
+  serialized_message* s_message = recv_data(config);
+  if (s_message == NULL) {
+    return NULL;
+  }
+
+  message* message_data = deserialize(s_message);
+  free(s_message->data);
+  free(s_message);
+  return message_data;
+}
+
 void free_message(message* message_data) {
   free(message_data->key);
   free(message_data->value);

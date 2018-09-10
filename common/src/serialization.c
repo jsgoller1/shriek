@@ -8,7 +8,7 @@ serialized_message* serialize(const message* const message_data) {
   // Initialized serialized message and message buffer
   serialized_message* s_message = malloc(sizeof(serialized_message));
   if (s_message == NULL) {
-    fprintf(stderr, "serialize() | Memory error. Quitting...");
+    fprintf(stderr, "serialize() | Memory error. Quitting...\n");
     return NULL;
   }
   memset(s_message, '\0', sizeof(serialized_message));
@@ -18,7 +18,7 @@ serialized_message* serialize(const message* const message_data) {
 
   char* buffer = malloc(s_message->len);
   if (buffer == NULL) {
-    fprintf(stderr, "serialize() | Memory error. Quitting...");
+    fprintf(stderr, "serialize() | Memory error. Quitting...\n");
     free(s_message);
     return NULL;
   }
@@ -46,7 +46,34 @@ serialized_message* serialize(const message* const message_data) {
   return s_message;
 }
 
-message* deserialize(const char* const serialized_message) {
-  (void)serialized_message;
-  return NULL;
+message* deserialize(const serialized_message* const s_message) {
+  enum action_type action = 0;
+  size_t key_size = 0;
+  size_t value_size = 0;
+
+  memcpy(&action, s_message->data, sizeof(enum action_type));
+  memcpy(&key_size, s_message->data + sizeof(size_t), sizeof(size_t));
+  memcpy(&value_size, s_message->data + (sizeof(size_t) * 2), sizeof(size_t));
+
+  char* key = calloc(1, sizeof(char) * (key_size + 1));
+  if (key == NULL) {
+    fprintf(stderr, "deserialize() | Memory error.\n");
+    return NULL;
+  }
+  memcpy(key, s_message->data + sizeof(size_t) * 3, key_size);
+
+  char* value = calloc(1, sizeof(char) * (value_size + 1));
+  if (value == NULL) {
+    fprintf(stderr, "deserialize() | Memory error.\n");
+    free(key);
+    return NULL;
+  }
+  memcpy(value, s_message->data + sizeof(size_t) * 3 + key_size, value_size);
+  printf("deserialize() | %s - %s\n", key, value);
+
+  message* message_data = create_message(action, key, value);
+
+  free(key);
+  free(value);
+  return message_data;
 }
