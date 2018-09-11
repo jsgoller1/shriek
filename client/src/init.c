@@ -38,10 +38,15 @@ ssize_t initialize_client(const flag_settings* const flags, net_config** config,
     return -1;
   }
 
-  if (connect_to_server(*config) == -1) {
-    cleanup(*config, *linep, *key, *value);
-    return -1;
-  }
+  // TODO: Client fails if server doesn't exist, which is intended behavior
+  // but not helpful until networking in the server is actually implemented.
+  //
+  /*
+    if (connect_to_server(*config) == -1) {
+      cleanup(*config, *linep, *key, *value);
+      return -1;
+    }
+  */
 
   // Initialize remaining data for client
   *linep = malloc(sizeof(char) * MAX_LINE);
