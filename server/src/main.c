@@ -28,7 +28,7 @@ int main(int argc, char** argv) {
     free_message(message_data);
   }
 
-  flush_hashtable();
+  flush_hashtable("shriek-serialized.bin");
   free_hashtable();
   return 0;
 }
