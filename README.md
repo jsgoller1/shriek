@@ -1,6 +1,13 @@
 # shriek
 A distributed key-value store. This was implemented for the [Bradfield School of Computer Science Distributed Systems](https://bradfieldcs.com/courses/distributed-systems/) class.
 
+## Demo
+```
+make shell    # Pull the test environment docker container
+cd shriek     # Enter the workspace
+make server   # Makes client, creates a test message, creates server, reads message, and executes behavior.
+```
+
 ## Open tasks
 See the `TODO.md` file.
 
