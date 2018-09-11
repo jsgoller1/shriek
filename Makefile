@@ -24,12 +24,15 @@ setup:
 
 clean:
 	-rm -r bin/*
-	-rm serialized_data.bin
 
 .PHONY: client server
 
-## Client
-client server: clean
+client: clean
+	-rm serialized_data.bin
 	$(COMPILE) -I $@/include/ $@/src/*.c -o bin/$@
 	echo "set THIS_IS_A_TEST_MESSAGE IT_IS_PRETTY_GREAT" | $(VALGRIND) bin/$@
 	hexdump -C serialized_data.bin
+
+server: clean client
+	$(COMPILE) -I $@/include/ $@/src/*.c -o bin/$@
+	$(VALGRIND) ./bin/$@
