@@ -11,7 +11,7 @@ docker: docker-clean
 	-v `pwd`:/shriek \
 	ubuntu
 	docker exec ubuntu apt-get update
-	docker exec ubuntu apt-get install -y make valgrind clang clang-tools cdecl perl
+	docker exec ubuntu apt-get install -y make valgrind clang clang-tools cdecl perl bsdmainutils
 
 shell:
 	docker exec -it ubuntu /bin/bash
