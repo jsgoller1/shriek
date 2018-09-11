@@ -13,21 +13,31 @@ flag_settings* parse_flags(const int argc, char* const* const argv) {
 
 ssize_t initialize_client(const flag_settings* const flags, net_config** config,
                           char** linep, char** key, char** value) {
+  (void)flags;
+
   // Initialize config struct
   *config = malloc(sizeof(net_config));
   if (*config == NULL) {
     fprintf(stderr, "initialize_client() | Memory error. Quitting...");
     return -1;
   }
-  // TODO: Parse addr/port out of the flag settings
-  (void)flags;
+
+  // TODO: Parse addr/port out of the flag settings;
+  // this should be handled by a parse_flags()
+  // function, but for now, just hardcode to localhost
   (*config)->address = strdup("127.0.0.1");
   if ((*config)->address == NULL) {
     fprintf(stderr, "initialize_client() | Memory error. Quitting...");
     cleanup(*config, *linep, *key, *value);
     return -1;
   }
-  (*config)->port = 9000;
+  (*config)->port = strdup("9000");
+  if ((*config)->port == NULL) {
+    fprintf(stderr, "initialize_client() | Memory error. Quitting...");
+    cleanup(*config, *linep, *key, *value);
+    return -1;
+  }
+
   if (connect_to_server(*config) == -1) {
     cleanup(*config, *linep, *key, *value);
     return -1;
@@ -62,6 +72,7 @@ ssize_t initialize_client(const flag_settings* const flags, net_config** config,
 // a NULL pointer is safe per the man pages
 void cleanup(net_config* config, char* linep, char* key, char* value) {
   free(config->address);
+  free(config->port);
   free(config);
   free(linep);
   free(key);

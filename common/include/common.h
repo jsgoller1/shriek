@@ -7,7 +7,11 @@
 #define MAX_KEY_SIZE KB(10)
 #define MAX_VAL_SIZE KB(100)
 
-enum action_type { SET, GET };
+enum action_type {
+  REPLY,
+  SET,
+  GET,
+};
 
 typedef struct message {
   enum action_type action;
@@ -24,8 +28,8 @@ typedef struct serialized_message {
 
 typedef struct net_config {
   char* address;
-  size_t port;
-  size_t socket;
+  char* port;
+  int socket;
 } net_config;
 
 // net.c

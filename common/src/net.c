@@ -1,12 +1,58 @@
+#include <netdb.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <sys/socket.h>
 #include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
 
 #include "common.h"
 
+// connect_to_server() - establish socket to server, or quit;
+// parts of this have been borrowed from Beej's guide
+// to network programming (see README.md)
 ssize_t connect_to_server(net_config* const config) {
-  // TODO: Networking stuff here
-  config->socket = 0;
+  int rv = 0;
+  int sockfd = 0;
+  struct addrinfo hints, *servinfo, *p;
+  memset(&hints, 0, sizeof hints);
+
+  hints.ai_family = AF_UNSPEC;
+  hints.ai_socktype = SOCK_STREAM;
+
+  if ((rv = getaddrinfo(config->address, config->port, &hints, &servinfo)) !=
+      0) {
+    fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
+    return 1;
+  }
+
+  // loop through all the results and connect to the first we can;
+  // break if the host/service combination can't be used for
+  // a socket, or the if the socket connection fails
+  for (p = servinfo; p != NULL; p = p->ai_next) {
+    if ((sockfd = socket(p->ai_family, p->ai_socktype, p->ai_protocol)) == -1) {
+      perror("client: socket");
+      continue;
+    }
+
+    if (connect(sockfd, p->ai_addr, p->ai_addrlen) == -1) {
+      close(sockfd);
+      perror("client: connect");
+      continue;
+    }
+
+    break;
+  }
+
+  if (p == NULL) {
+    fprintf(stderr, "client: failed to connect\n");
+    freeaddrinfo(servinfo);
+    return -1;
+  }
+
+  config->socket = sockfd;
+  freeaddrinfo(servinfo);
   return 0;
 }
 
@@ -17,7 +63,7 @@ char* send_data(const net_config* const config,
   if (s_message == NULL) {
     return NULL;
   }
-  printf("Sending to %s:%lu\n", config->address, config->port);
+  printf("Sending to %s:%s\n", config->address, config->port);
 
   // TODO: Socket stuff goes here; in the meantime,
   // dump the binary data to disk for examination.
