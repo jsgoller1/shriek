@@ -23,7 +23,7 @@ disaster and need to have a consistent record in spite of an unreliable network.
 need to come on line with batches of queued writes while simultaneously receiving writes.
 
 
-# Credits / special thanks
+## Credits / special thanks
 - [Brian "Beej Jorgensen" Hall](https://beej.us/guide/bgnet/html/multi/index.html) for his immortal guide to
 network programming; I copied some of his code snippets for my initial
 networking-related functions.
