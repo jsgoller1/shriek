@@ -3,9 +3,9 @@
 #include <string.h>
 
 #include "client.h"
-#include "common.h"
+#include "shriek_types.h"
 
-flag_settings* parse_flags(const int argc, char* const* const argv) {
+flag_settings* parse_client_flags(const int argc, char* const* const argv) {
   (void)argc;
   (void)argv;
   return NULL;

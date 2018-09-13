@@ -3,7 +3,9 @@
 #include <string.h>
 
 #include "client.h"
-#include "common.h"
+#include "messages.h"
+#include "net.h"
+#include "shriek_types.h"
 
 int main(int argc, char** argv) {
   size_t line_size = 1000;
@@ -12,7 +14,7 @@ int main(int argc, char** argv) {
   char* value = NULL;
   net_config* config = NULL;
 
-  flag_settings* flags = parse_flags(argc, argv);
+  flag_settings* flags = parse_client_flags(argc, argv);
   if (initialize_client(flags, &config, &linep, &key, &value) == -1) {
     return -1;
   }

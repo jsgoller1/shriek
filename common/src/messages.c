@@ -2,7 +2,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "common.h"
+#include "messages.h"
+#include "net.h"
+#include "serialization.h"
+#include "shriek_types.h"
 
 message* create_message(enum action_type action, const char* const key,
                         const char* const value) {

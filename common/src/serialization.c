@@ -2,8 +2,13 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "common.h"
+#include "messages.h"
+#include "serialization.h"
+#include "shriek_types.h"
 
+/*
+ * serialize() - convert a message to a serialized binary message
+ */
 serialized_message* serialize(const message* const message_data) {
   // Initialized serialized message and message buffer
   serialized_message* s_message = malloc(sizeof(serialized_message));
@@ -46,6 +51,9 @@ serialized_message* serialize(const message* const message_data) {
   return s_message;
 }
 
+/*
+ * deserialize() - convert a serialized message to a message struct
+ */
 message* deserialize(const serialized_message* const s_message) {
   enum action_type action = 0;
   size_t key_size = 0;

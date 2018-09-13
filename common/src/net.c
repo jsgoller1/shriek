@@ -7,7 +7,9 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#include "common.h"
+#include "net.h"
+#include "serialization.h"
+#include "shriek_types.h"
 
 // connect_to_server() - establish socket to server, or quit;
 // parts of this have been borrowed from Beej's guide
