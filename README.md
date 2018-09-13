@@ -22,6 +22,8 @@ considered use-case, clients would be responders / public servants responding to
 disaster and need to have a consistent record in spite of an unreliable network. New nodes
 need to come on line with batches of queued writes while simultaneously receiving writes.
 
+## Protocol design
+See `PROTOCOL.md`.
 
 ## Credits / special thanks
 - [Brian "Beej Jorgensen" Hall](https://beej.us/guide/bgnet/html/multi/index.html) for his immortal guide to
