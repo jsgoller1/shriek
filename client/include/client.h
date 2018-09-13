@@ -1,4 +1,5 @@
 #pragma once
+
 #include <stdio.h>
 
 #include "shriek_types.h"

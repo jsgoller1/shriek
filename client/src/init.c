@@ -1,3 +1,7 @@
+/*
+ * init.c - setup / teardown library for Shriek client
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -5,12 +9,20 @@
 #include "client.h"
 #include "shriek_types.h"
 
-configuration* parse_client_flags(const int argc, char* const* const argv) {
+/*
+ * parse_flags_client() - parse argc/argv into configuration structure
+ * needed for initialization
+ */
+configuration* parse_flags_client(const int argc, char* const* const argv) {
   (void)argc;
   (void)argv;
   return NULL;
 }
 
+/*
+ * initialize_client(): Set up all necessary data structures for client
+ * operation
+ */
 ssize_t initialize_client(configuration** const config, char** linep,
                           char** key, char** value) {
   // Initialize config struct
@@ -71,8 +83,10 @@ ssize_t initialize_client(configuration** const config, char** linep,
   return 0;
 }
 
-// cleanup(): Ensures all data malloc'd is appropriately freed; freeing
-// a NULL pointer is safe per the man pages
+/*
+ * cleanup_client(): Ensures all client structures are properly freed
+ * prior to shutdown
+ */
 void cleanup(configuration* config, char* linep, char* key, char* value) {
   free(config->address);
   free(config->port);

@@ -4,8 +4,17 @@
 #define KB(x) ((size_t)(x) << 10)
 #define MB(x) ((size_t)(x) << 20)
 
+#ifndef MAX_CONNECTIONS
+#define MAX_CONNECTIONS 10
+#endif
+
+#ifndef MAX_KEY_SIZE
 #define MAX_KEY_SIZE KB(10)
+#endif
+
+#ifndef MAX_VAL_SIZE
 #define MAX_VAL_SIZE KB(100)
+#endif
 
 enum action_type {
   REPLY,

@@ -1,3 +1,9 @@
+/*
+ * messages.c - high level library for sending and receiving
+ * Shriek application protocol messages. See PROTOCOL.md
+ * for a description of the Shriek protocol.
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -7,8 +13,11 @@
 #include "serialization.h"
 #include "shriek_types.h"
 
-message* create_message(enum action_type action, const char* const key,
-                        const char* const value) {
+/*
+ * alloc_message(): message constructor
+ */
+message* alloc_message(enum action_type action, const char* const key,
+                       const char* const value) {
   message* message_data = malloc(sizeof(message));
   if (message_data == NULL) {
     fprintf(stderr,
@@ -37,6 +46,19 @@ message* create_message(enum action_type action, const char* const key,
   return message_data;
 }
 
+/*
+ * free_message(): message destructor
+ */
+void free_message(message* message_data) {
+  free(message_data->key);
+  free(message_data->value);
+  free(message_data);
+}
+
+/*
+ * send_message(): serialize a message structure, send it
+ * to a connected host.
+ */
 ssize_t send_message(const configuration* const config_data,
                      const enum action_type action, const char* const key,
                      const char* const value) {
@@ -62,7 +84,11 @@ ssize_t send_message(const configuration* const config_data,
   return 0;
 }
 
-message* listen_for_messages(const configuration* const config) {
+/*
+ * recv_message(): wait for a serialized message,
+ * deserialize it, and return a message structure
+ */
+message* recv_message(const configuration* const config) {
   serialized_message* s_message = recv_data(config);
   if (s_message == NULL) {
     return NULL;
@@ -72,10 +98,4 @@ message* listen_for_messages(const configuration* const config) {
   free(s_message->data);
   free(s_message);
   return message_data;
-}
-
-void free_message(message* message_data) {
-  free(message_data->key);
-  free(message_data->value);
-  free(message_data);
 }

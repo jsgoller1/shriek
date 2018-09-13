@@ -1,4 +1,12 @@
+/*
+ * net.c - low level networking library for handling
+ * sockets and data transmission. Much of this has been
+ * shamelessly borrowed from Beej's Guide to Networking
+ * (see README.md)
+ */
+
 #include <netdb.h>
+#include <poll.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -11,10 +19,12 @@
 #include "serialization.h"
 #include "shriek_types.h"
 
-// connect_to_server() - establish socket to server, or quit;
-// parts of this have been borrowed from Beej's guide
-// to network programming (see README.md)
-ssize_t connect_to_server(configuration* const config) {
+struct pollfd connection_pool[MAX_CONNECTIONS] = {0};
+
+/*
+ * node_connect() - establish a connection to another node
+ */
+ssize_t node_connect(configuration* const config) {
   int rv = 0;
   int sockfd = 0;
   struct addrinfo hints, *servinfo, *p;
@@ -58,6 +68,18 @@ ssize_t connect_to_server(configuration* const config) {
   return 0;
 }
 
+/*
+ * node_disconnect(): terminate a connection to another node.
+ */
+ssize_t node_disconnect(const configuration* const config) {
+  // TODO: Networking stuff here
+  (void)config;
+  return 0;
+}
+
+/*
+ * send_data(): given an established connection, send data to it
+ */
 char* send_data(const configuration* const config,
                 const serialized_message* const s_message) {
   char* reply = NULL;
@@ -111,10 +133,4 @@ serialized_message* recv_data(const configuration* const config) {
   remove("serialized_data.bin");
 
   return s_message;
-}
-
-ssize_t disconnect(const configuration* const config) {
-  // TODO: Networking stuff here
-  (void)config;
-  return 0;
 }

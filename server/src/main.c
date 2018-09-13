@@ -33,7 +33,6 @@ int main(int argc, char** argv) {
     free_message(message_data);
   }
 
-  flush_hashtable(ht, "shriek-serialized.bin");
-  free_hashtable(ht, config->hashtable_size);
+  cleanup_server(config, ht);
   return 0;
 }

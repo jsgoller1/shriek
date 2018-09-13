@@ -7,6 +7,9 @@
 #include "net.h"
 #include "shriek_types.h"
 
+/*
+ * main() - entrypoint for Shriek client
+ */
 int main(int argc, char** argv) {
   size_t line_size = 1000;
   char* linep = NULL;

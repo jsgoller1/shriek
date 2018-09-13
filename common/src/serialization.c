@@ -1,3 +1,8 @@
+/*
+ * serialization.c - helper functions for converting a Shriek message
+ * struct into over-the-wire binary and vice-versa.
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
