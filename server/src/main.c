@@ -10,27 +10,30 @@
  * main() - entrypoint for server
  */
 int main(int argc, char** argv) {
-  message* message_data;
+  message* message_data = NULL;
+  hashtable_entry** ht = NULL;
   configuration* config = parse_flags(argc, argv);
 
-  if (initialize_server(config) == -1) {
+  if (initialize_server(config, ht) == -1) {
     return -1;
   }
 
   printf("Starting shriek server...\n");
   while ((message_data = listen_for_messages(config)) != NULL) {
     if (message_data->action == GET) {
-      printf("GET: %s - %s\n", message_data->key, hash_get(message_data->key));
+      printf("GET: %s - %s\n", message_data->key,
+             hash_get(ht, message_data->key));
     } else if (message_data->action == SET) {
-      hash_set(message_data->key, message_data->value);
-      printf("SET: %s - %s\n", message_data->key, hash_get(message_data->key));
+      hash_set(ht, message_data->key, message_data->value);
+      printf("SET: %s - %s\n", message_data->key,
+             hash_get(ht, message_data->key));
     } else {
       fprintf(stderr, "Invalid command.\n");
     }
     free_message(message_data);
   }
 
-  flush_hashtable("shriek-serialized.bin");
-  clear_hashtable();
+  flush_hashtable(ht, "shriek-serialized.bin");
+  free_hashtable(ht, config->hashtable_size);
   return 0;
 }

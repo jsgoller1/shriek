@@ -1,3 +1,5 @@
+#pragma once
+
 #define DEFAULT_HT_SIZE 1000
 
 typedef struct hashtable_entry {

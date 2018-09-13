@@ -1,3 +1,9 @@
+/*
+ * hashtable.c - Shriek's in-memory data store is implemented as a hashtable
+ * with chaining for collision resolution. djb2 is the hash algorithm:
+ * http://www.cse.yorku.ca/~oz/hash.html
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -5,34 +11,75 @@
 #include "server.h"
 
 /*
- * hashtable.c - Shriek's in-memory data store is implemented as a hashtable
- * with chaining for collision resolution. djb2 is the hash algorithm:
- * http://www.cse.yorku.ca/~oz/hash.html
+ * alloc_hashtable(): hashtable constructor
  */
+hashtable_entry** alloc_hashtable(const size_t ht_size) {
+  hashtable_entry** ht = calloc(ht_size, sizeof(hashtable_entry*));
+  if (ht == NULL) {
+    fprintf(stderr, "alloc_hashtable() | memory error\n");
+    return NULL;
+  }
 
-hashtable_entry* hashtable[DEFAULT_HT_SIZE] = {NULL};
+  return ht;
+}
 
 /*
- * create_hashtable_entry(): hashtable_entry constructor
+ * free_hashtable(): hashtable destructor
  */
-hashtable_entry* create_hashtable_entry(const char* const key,
-                                        const char* const value) {
+void free_hashtable(hashtable_entry** ht, const size_t ht_size) {
+  for (int i = 0; i < ht_size; i++) {
+    if (ht[i] != NULL) {
+      hashtable_entry* current = ht[i];
+      hashtable_entry* next = NULL;
+      while (current != NULL) {
+        if (current->next != NULL) {
+          next = current->next;
+        }
+        free_hte(current);
+        current = next;
+      }
+    }
+  }
+}
+
+/*
+ * flush_hashtable(): serialize hashtable from memory to file
+ */
+ssize_t flush_hashtable(hashtable_entry* const* const, ht,
+                        const char* const path) {
+  (void)path;
+  return 0;
+}
+
+/*
+ * restore_hashtable(): restore serialized hashtable from file to memory
+ */
+ssize_t restore_hashtable(hashtable_entry** const ht, const char* const path) {
+  (void)path;
+  return 0;
+}
+
+/*
+ * alloc_hashtable_entry(): hashtable_entry constructor
+ */
+hashtable_entry* alloc_hashtable_entry(const char* const key,
+                                       const char* const value) {
   hashtable_entry* hte = malloc(sizeof(hashtable_entry));
   if (hte == NULL) {
-    fprintf(stderr, "create_hashtable_entry() | Memory error.\n");
+    fprintf(stderr, "alloc_hte() | Memory error.\n");
     return NULL;
   }
 
   hte->key = strdup(key);
   if (hte->key == NULL) {
-    fprintf(stderr, "create_hashtable_entry() | Memory error.\n");
+    fprintf(stderr, "alloc_hte() | Memory error.\n");
     free(hte);
     return NULL;
   }
 
   hte->value = strdup(value);
   if (hte->value == NULL) {
-    fprintf(stderr, "create_hashtable_entry() | Memory error.\n");
+    fprintf(stderr, "alloc_hte() | Memory error.\n");
     free(hte->key);
     free(hte);
     return NULL;
@@ -53,7 +100,7 @@ void free_hashtable_entry(hashtable_entry* hte) {
 /*
  * hash_get(): look up a key in the hashtable and return the value
  */
-char* hash_get(const char* const key) {
+char* hash_get(hashtable_entry** ht, const char* const key) {
   size_t hashval = hash(key);
   hashtable_entry* current = hashtable[hashval];
   while (current != NULL) {
@@ -70,7 +117,8 @@ char* hash_get(const char* const key) {
 /*
  * hash_set(): install new k/v pair in the hashtable
  */
-ssize_t hash_set(const char* const key, const char* const value) {
+ssize_t hash_set(hashtable_entry** ht, const char* const key,
+                 const char* const value) {
   // Check to see if the key is already in the table; if
   // so, dump the old value and install the new one.
   size_t hashval = hash(key);
@@ -100,10 +148,10 @@ ssize_t hash_set(const char* const key, const char* const value) {
 }
 
 /*
- * hash(): implements djb2 hashing.
+ * djb2_hash(): implements djb2 hashing.
  * source: http://www.cse.yorku.ca/~oz/hash.html
  */
-size_t hash(const char* str) {
+size_t djb2_hash(const char* str) {
   size_t hash = 5381;
   unsigned char c;
 
@@ -113,36 +161,4 @@ size_t hash(const char* str) {
   }
 
   return hash % DEFAULT_HT_SIZE;
-}
-
-/*
- * flush_hashtable(): write every entry in the hashtable to a
- * file on disk
- */
-void flush_hashtable(const char* const path) { (void)path; }
-
-/*
- * restore_hashtable(): parse serialzied hashtable file
- * and restore entries in memory.
- */
-void restore_hashtable(const char* const path) { (void)path; }
-
-/*
- * clear_hashtable(): prior to shutdown, walk the hashtable and
- * free all entries. This is implemented mostly for diagnostic purposes.
- */
-void clear_hashtable() {
-  for (int i = 0; i < DEFAULT_HT_SIZE; i++) {
-    if (hashtable[i] != NULL) {
-      hashtable_entry* current = hashtable[i];
-      hashtable_entry* next = NULL;
-      while (current != NULL) {
-        if (current->next != NULL) {
-          next = current->next;
-        }
-        free_hashtable_entry(current);
-        current = next;
-      }
-    }
-  }
 }
