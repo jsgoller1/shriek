@@ -5,18 +5,16 @@
 #include "client.h"
 #include "shriek_types.h"
 
-flag_settings* parse_client_flags(const int argc, char* const* const argv) {
+configuration* parse_client_flags(const int argc, char* const* const argv) {
   (void)argc;
   (void)argv;
   return NULL;
 }
 
-ssize_t initialize_client(const flag_settings* const flags, net_config** config,
-                          char** linep, char** key, char** value) {
-  (void)flags;
-
+ssize_t initialize_client(configuration** const config, char** linep,
+                          char** key, char** value) {
   // Initialize config struct
-  *config = malloc(sizeof(net_config));
+  *config = malloc(sizeof(configuration));
   if (*config == NULL) {
     fprintf(stderr, "initialize_client() | Memory error. Quitting...");
     return -1;
@@ -75,7 +73,7 @@ ssize_t initialize_client(const flag_settings* const flags, net_config** config,
 
 // cleanup(): Ensures all data malloc'd is appropriately freed; freeing
 // a NULL pointer is safe per the man pages
-void cleanup(net_config* config, char* linep, char* key, char* value) {
+void cleanup(configuration* config, char* linep, char* key, char* value) {
   free(config->address);
   free(config->port);
   free(config);

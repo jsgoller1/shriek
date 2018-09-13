@@ -1,22 +1,24 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "common.h"
+#include "messages.h"
+#include "net.h"
 #include "server.h"
+#include "shriek_types.h"
 
+/*
+ * main() - entrypoint for server
+ */
 int main(int argc, char** argv) {
-  printf("Starting shriek server...\n");
   message* message_data;
-  net_config* config = NULL;
+  configuration* config = parse_flags(argc, argv);
 
-  flag_settings* flags = parse_flags(argc, argv);
-
-  if (initialize_server(flags, config) == -1) {
+  if (initialize_server(config) == -1) {
     return -1;
   }
 
+  printf("Starting shriek server...\n");
   while ((message_data = listen_for_messages(config)) != NULL) {
-    // TODO: Send reply over socket; for now, just print
     if (message_data->action == GET) {
       printf("GET: %s - %s\n", message_data->key, hash_get(message_data->key));
     } else if (message_data->action == SET) {
@@ -29,6 +31,6 @@ int main(int argc, char** argv) {
   }
 
   flush_hashtable("shriek-serialized.bin");
-  free_hashtable();
+  clear_hashtable();
   return 0;
 }

@@ -14,7 +14,7 @@
 // connect_to_server() - establish socket to server, or quit;
 // parts of this have been borrowed from Beej's guide
 // to network programming (see README.md)
-ssize_t connect_to_server(net_config* const config) {
+ssize_t connect_to_server(configuration* const config) {
   int rv = 0;
   int sockfd = 0;
   struct addrinfo hints, *servinfo, *p;
@@ -58,7 +58,7 @@ ssize_t connect_to_server(net_config* const config) {
   return 0;
 }
 
-char* send_data(const net_config* const config,
+char* send_data(const configuration* const config,
                 const serialized_message* const s_message) {
   char* reply = NULL;
 
@@ -77,7 +77,7 @@ char* send_data(const net_config* const config,
   return reply;
 }
 
-serialized_message* recv_data(const net_config* const config) {
+serialized_message* recv_data(const configuration* const config) {
   // TODO: Socket stuff goes here; in the meantime,
   // read the binary data from disk.
   (void)config;
@@ -113,7 +113,7 @@ serialized_message* recv_data(const net_config* const config) {
   return s_message;
 }
 
-ssize_t disconnect(const net_config* const config) {
+ssize_t disconnect(const configuration* const config) {
   // TODO: Networking stuff here
   (void)config;
   return 0;

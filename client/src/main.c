@@ -12,10 +12,8 @@ int main(int argc, char** argv) {
   char* linep = NULL;
   char* key = NULL;
   char* value = NULL;
-  net_config* config = NULL;
-
-  flag_settings* flags = parse_client_flags(argc, argv);
-  if (initialize_client(flags, &config, &linep, &key, &value) == -1) {
+  configuration* config = parse_client_flags(argc, argv);
+  if (initialize_client(&config, &linep, &key, &value) == -1) {
     return -1;
   }
 

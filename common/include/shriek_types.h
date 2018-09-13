@@ -13,11 +13,11 @@ enum action_type {
   GET,
 };
 
-typedef struct net_config {
+typedef struct configuration {
   char* address;
   char* port;
   int socket;
-} net_config;
+} configuration;
 
 typedef struct message {
   enum action_type action;

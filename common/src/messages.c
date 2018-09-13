@@ -37,7 +37,7 @@ message* create_message(enum action_type action, const char* const key,
   return message_data;
 }
 
-ssize_t send_message(const net_config* const config_data,
+ssize_t send_message(const configuration* const config_data,
                      const enum action_type action, const char* const key,
                      const char* const value) {
   printf("send_message() | sending message %d %s %s\n", action, key, value);
@@ -62,7 +62,7 @@ ssize_t send_message(const net_config* const config_data,
   return 0;
 }
 
-message* listen_for_messages(const net_config* const config) {
+message* listen_for_messages(const configuration* const config) {
   serialized_message* s_message = recv_data(config);
   if (s_message == NULL) {
     return NULL;
