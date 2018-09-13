@@ -59,9 +59,8 @@ void free_message(message* message_data) {
  * send_message(): serialize a message structure, send it
  * to a connected host.
  */
-ssize_t send_message(const configuration* const config_data,
-                     const enum action_type action, const char* const key,
-                     const char* const value) {
+ssize_t send_message(const ssize_t connection_id, const enum action_type action,
+                     const char* const key, const char* const value) {
   printf("send_message() | sending message %d %s %s\n", action, key, value);
 
   message* message_data = create_message(action, key, value);
@@ -85,8 +84,38 @@ ssize_t send_message(const configuration* const config_data,
 }
 
 /*
- * recv_message(): wait for a serialized message,
- * deserialize it, and return a message structure
+ * reply_message(): After a message structure is recieved from recv_message(),
+ * the correct reply may be sent to the sender by passing the message and the
+ * desired response to this function.
+ */
+ssize_t reply_message(const message* const message_data,
+                      const char* const reply_data) {
+  printf("send_message() | sending message %d %s %s\n", action, key, value);
+
+  message* message_data = create_message(action, key, value);
+  if (message_data == NULL) {
+    return -1;
+  }
+
+  serialized_message* s_message = serialize(message_data);
+  if (s_message == NULL) {
+    free(message_data);
+    return -1;
+  }
+
+  char* reply = send_data(config_data, s_message);
+
+  fprintf(stdout, "send_message() | server reply: %s\n", reply);
+  free_message(message_data);
+  free(s_message->data);
+  free(s_message);
+  return 0;
+}
+
+/*
+ * recv_message(): poll the connection pool via poll(2) and
+ * return the first complete message recieved, deserializing
+ * it first.
  */
 message* recv_message(const configuration* const config) {
   serialized_message* s_message = recv_data(config);

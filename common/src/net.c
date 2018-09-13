@@ -3,6 +3,15 @@
  * sockets and data transmission. Much of this has been
  * shamelessly borrowed from Beej's Guide to Networking
  * (see README.md)
+ *
+ * The connection_pool[] array exists to support socket
+ * multiplexing via poll(2). By convention, connection_pool[0] is a listening
+ * socket upon which accept(2) is called; connections are added to the socket
+ * pool, or an error will be thrown and the connection will be closed.
+ *
+ * Shriek clients and servers both use this library; clients may establish
+ * new connections manually and should leave connection_pool[0] empty so that
+ * it is skipped by connections_listen();
  */
 
 #include <netdb.h>
@@ -99,6 +108,9 @@ char* send_data(const configuration* const config,
   return reply;
 }
 
+/*
+ * rev_data():
+ */
 serialized_message* recv_data(const configuration* const config) {
   // TODO: Socket stuff goes here; in the meantime,
   // read the binary data from disk.
