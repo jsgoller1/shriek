@@ -20,7 +20,8 @@
     "ratio": "c",
     "system_error": "c",
     "tuple": "c",
-    "vector": "c"
+    "vector": "c",
+    "__locale": "c"
   },
   "files.insertFinalNewline": true,
   "editor.tabSize": 2,
