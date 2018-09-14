@@ -1,0 +1,16 @@
+{
+  "editor.formatOnPaste": true,
+  "editor.formatOnSave": true,
+  "C_Cpp.clang_format_fallbackStyle": "Google",
+  "C_Cpp.clang_format_path": "/usr/local/bin/clang-format",
+  "files.associations": {
+    "stdio.h": "c",
+    "string.h": "c",
+    "type_traits": "c"
+  },
+  "files.insertFinalNewline": true,
+  "editor.tabSize": 2,
+  "C_Cpp.intelliSenseEngine": "Tag Parser",
+  "C_Cpp.intelliSenseEngineFallback": "Disabled",
+  "C_Cpp.errorSquiggles": "Disabled"
+}

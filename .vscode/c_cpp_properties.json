@@ -1,0 +1,57 @@
+{
+    "configurations": [
+        {
+            "name": "Mac",
+            "includePath": [
+                "common/include",
+                "server/include",
+                "client/include",
+                "/usr/local/include",
+                "/Library/Developer/CommandLineTools/usr/lib/clang/9.1.0/include",
+                "/Library/Developer/CommandLineTools/usr/include",
+                "/usr/include",
+                "/System/Library/Frameworks",
+                "/Library/Frameworks"
+            ],
+            "defines": [],
+            "intelliSenseMode": "clang-x64",
+            "browse": {
+                "path": [
+                    "common/include",
+                    "server/include",
+                    "client/include",
+                    "/usr/local/include",
+                    "/Library/Developer/CommandLineTools/usr/lib/clang/9.1.0/include",
+                    "/Library/Developer/CommandLineTools/usr/include",
+                    "/usr/include",
+                    "/System/Library/Frameworks",
+                    "/Library/Frameworks"
+                ],
+                "limitSymbolsToIncludedHeaders": true,
+                "databaseFilename": ""
+            },
+            "macFrameworkPath": [
+                "/System/Library/Frameworks",
+                "/Library/Frameworks"
+            ],
+            "compilerPath": "/usr/bin/clang",
+            "cStandard": "c11",
+            "cppStandard": "c++17"
+        },
+        {
+            "name": "Linux",
+            "includePath": [],
+            "defines": [],
+            "intelliSenseMode": "clang-x64",
+            "browse": {
+                "path": [],
+                "limitSymbolsToIncludedHeaders": true,
+                "databaseFilename": ""
+            },
+            "compilerPath": "/usr/bin/clang",
+            "cStandard": "c11",
+            "cppStandard": "c++17"
+        }
+    ],
+    "version": 4
+}
