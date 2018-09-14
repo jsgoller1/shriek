@@ -26,7 +26,7 @@ configuration* parse_flags_client(const int argc, char* const* const argv) {
 ssize_t initialize_client(configuration** const config, char** linep,
                           char** key, char** value) {
   // Initialize config struct
-  *config = malloc(sizeof(configuration));
+  *config = calloc(1, sizeof(configuration));
   if (*config == NULL) {
     fprintf(stderr, "initialize_client() | Memory error. Quitting...");
     return -1;

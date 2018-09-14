@@ -84,7 +84,7 @@ message* deserialize(const serialized_message* const s_message) {
   memcpy(value, s_message->data + sizeof(size_t) * 3 + key_size, value_size);
   printf("deserialize() | %s - %s\n", key, value);
 
-  message* message_data = create_message(action, key, value);
+  message* message_data = alloc_message(action, key, value);
 
   free(key);
   free(value);

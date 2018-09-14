@@ -28,7 +28,7 @@
 #include "serialization.h"
 #include "shriek_types.h"
 
-struct pollfd connection_pool[MAX_CONNECTIONS] = {0};
+struct pollfd* connection_pool[MAX_CONNECTIONS] = {0};
 
 /*
  * node_connect() - establish a connection to another node
@@ -89,14 +89,14 @@ ssize_t node_disconnect(const configuration* const config) {
 /*
  * send_data(): given an established connection, send data to it
  */
-char* send_data(const configuration* const config,
+char* send_data(const size_t connection_id,
                 const serialized_message* const s_message) {
   char* reply = NULL;
 
   if (s_message == NULL) {
     return NULL;
   }
-  printf("Sending to %s:%s\n", config->address, config->port);
+  printf("Sending to %lu\n", connection_id);
 
   // TODO: Socket stuff goes here; in the meantime,
   // dump the binary data to disk for examination.

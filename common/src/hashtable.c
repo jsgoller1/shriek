@@ -31,7 +31,7 @@ void free_hashtable(hashtable_entry** ht, const size_t ht_size) {
     if (ht[i] != NULL) {
       hashtable_entry* current = ht[i];
       hashtable_entry* next = NULL;
-      while (current != NULL) {
+      while (current != NULL) {  // this throws a scan-build warning
         if (current->next != NULL) {
           next = current->next;
         }

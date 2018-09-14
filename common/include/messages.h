@@ -2,10 +2,11 @@
 
 #include "shriek_types.h"
 
-message* create_message(enum action_type action, const char* const key,
-                        const char* const val);
-ssize_t send_message(const configuration* const config,
-                     const enum action_type action, const char* const key,
-                     const char* const value);
-message* listen_for_messages(const configuration* const config);
+message* alloc_message(enum action_type action, const char* const key,
+                       const char* const value);
 void free_message(message* message_data);
+ssize_t send_message(const size_t connection_id, const enum action_type action,
+                     const char* const key, const char* const value);
+ssize_t reply_message(const message* const message_data,
+                      const char* const reply_data);
+message* recv_message(const configuration* const config);

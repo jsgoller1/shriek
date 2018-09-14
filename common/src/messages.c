@@ -59,11 +59,11 @@ void free_message(message* message_data) {
  * send_message(): serialize a message structure, send it
  * to a connected host.
  */
-ssize_t send_message(const ssize_t connection_id, const enum action_type action,
+ssize_t send_message(const size_t connection_id, const enum action_type action,
                      const char* const key, const char* const value) {
   printf("send_message() | sending message %d %s %s\n", action, key, value);
 
-  message* message_data = create_message(action, key, value);
+  message* message_data = alloc_message(action, key, value);
   if (message_data == NULL) {
     return -1;
   }
@@ -74,7 +74,7 @@ ssize_t send_message(const ssize_t connection_id, const enum action_type action,
     return -1;
   }
 
-  char* reply = send_data(config_data, s_message);
+  char* reply = send_data(connection_id, s_message);
 
   fprintf(stdout, "send_message() | server reply: %s\n", reply);
   free_message(message_data);
@@ -90,25 +90,8 @@ ssize_t send_message(const ssize_t connection_id, const enum action_type action,
  */
 ssize_t reply_message(const message* const message_data,
                       const char* const reply_data) {
-  printf("send_message() | sending message %d %s %s\n", action, key, value);
-
-  message* message_data = create_message(action, key, value);
-  if (message_data == NULL) {
-    return -1;
-  }
-
-  serialized_message* s_message = serialize(message_data);
-  if (s_message == NULL) {
-    free(message_data);
-    return -1;
-  }
-
-  char* reply = send_data(config_data, s_message);
-
-  fprintf(stdout, "send_message() | server reply: %s\n", reply);
-  free_message(message_data);
-  free(s_message->data);
-  free(s_message);
+  (void)message_data;
+  (void)reply_data;
   return 0;
 }
 
