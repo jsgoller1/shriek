@@ -8,13 +8,19 @@ typedef struct hashtable_entry {
   struct hashtable_entry* next;
 } hashtable_entry;
 
-extern hashtable_entry* hashtable[];
+// Hashtable management functions
+hashtable_entry** alloc_hashtable(const size_t ht_size);
+void free_hashtable(hashtable_entry** ht, const size_t ht_size);
+ssize_t flush_hashtable(hashtable_entry* const* const ht,
+                        const char* const path);
+ssize_t restore_hashtable(hashtable_entry** const ht, const char* const path);
 
-char* hash_get(const char* const key);
-ssize_t hash_set(const char* const key, const char* const value);
-size_t hash(const char* str);
+// Hashtable entry functions
+hashtable_entry* alloc_hashtable_entry(const char* const key,
+                                       const char* const value);
 void free_hashtable_entry(hashtable_entry* hte);
-hashtable_entry* create_hashtable_entry(const char* const key,
-                                        const char* const value);
-void flush_hashtable(const char* const path);
-void free_hashtable(void);
+char* hash_get(hashtable_entry** ht, const char* const key);
+ssize_t hash_set(hashtable_entry** ht, const char* const key,
+                 const char* const value);
+
+size_t djb2_hash(const char* str);

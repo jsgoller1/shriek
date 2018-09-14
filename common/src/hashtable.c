@@ -8,7 +8,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "server.h"
+#include "hashtable.h"
 
 /*
  * alloc_hashtable(): hashtable constructor
@@ -27,7 +27,7 @@ hashtable_entry** alloc_hashtable(const size_t ht_size) {
  * free_hashtable(): hashtable destructor
  */
 void free_hashtable(hashtable_entry** ht, const size_t ht_size) {
-  for (int i = 0; i < ht_size; i++) {
+  for (size_t i = 0; i < ht_size; i++) {
     if (ht[i] != NULL) {
       hashtable_entry* current = ht[i];
       hashtable_entry* next = NULL;
@@ -35,7 +35,7 @@ void free_hashtable(hashtable_entry** ht, const size_t ht_size) {
         if (current->next != NULL) {
           next = current->next;
         }
-        free_hte(current);
+        free_hashtable_entry(current);
         current = next;
       }
     }
@@ -45,8 +45,9 @@ void free_hashtable(hashtable_entry** ht, const size_t ht_size) {
 /*
  * flush_hashtable(): serialize hashtable from memory to file
  */
-ssize_t flush_hashtable(hashtable_entry* const* const, ht,
+ssize_t flush_hashtable(hashtable_entry* const* const ht,
                         const char* const path) {
+  (void)ht;
   (void)path;
   return 0;
 }
@@ -55,6 +56,7 @@ ssize_t flush_hashtable(hashtable_entry* const* const, ht,
  * restore_hashtable(): restore serialized hashtable from file to memory
  */
 ssize_t restore_hashtable(hashtable_entry** const ht, const char* const path) {
+  (void)ht;
   (void)path;
   return 0;
 }
@@ -101,8 +103,8 @@ void free_hashtable_entry(hashtable_entry* hte) {
  * hash_get(): look up a key in the hashtable and return the value
  */
 char* hash_get(hashtable_entry** ht, const char* const key) {
-  size_t hashval = hash(key);
-  hashtable_entry* current = hashtable[hashval];
+  size_t hashval = djb2_hash(key);
+  hashtable_entry* current = ht[hashval];
   while (current != NULL) {
     if (strcmp(current->key, key) == 0) {
       return current->value;
@@ -121,8 +123,8 @@ ssize_t hash_set(hashtable_entry** ht, const char* const key,
                  const char* const value) {
   // Check to see if the key is already in the table; if
   // so, dump the old value and install the new one.
-  size_t hashval = hash(key);
-  hashtable_entry* current = hashtable[hashval];
+  size_t hashval = djb2_hash(key);
+  hashtable_entry* current = ht[hashval];
   while (current != NULL) {
     if (strcmp(current->key, key) == 0) {
       free(current->value);
@@ -138,12 +140,12 @@ ssize_t hash_set(hashtable_entry** ht, const char* const key,
   }
 
   // Otherwise, install the new entry as the first item
-  hashtable_entry* hte = create_hashtable_entry(key, value);
+  hashtable_entry* hte = alloc_hashtable_entry(key, value);
   if (hte == NULL) {
     return -1;
   }
-  hte->next = hashtable[hashval];
-  hashtable[hashval] = hte;
+  hte->next = ht[hashval];
+  ht[hashval] = hte;
   return 0;
 }
 
