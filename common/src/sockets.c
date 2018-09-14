@@ -1,6 +1,6 @@
 /*
- * sockets.c - low level networking library for handling
- * sockets and data transmission. Much of this has been
+ * sockets.c - a low level networking library for handling
+ * C standard library sockets. Much of this has been
  * shamelessly borrowed from Beej's Guide to Networking
  * (see README.md)
  */
@@ -56,10 +56,10 @@ int initialize_socket(const char* const address, const char* const port,
 void cleanup_socket(int sockfd) { close(sockfd); }
 
 /*
- * node_listen() - begin listening for incoming connections by
+ * socket_listen() - begin listening for incoming connections by
  * creating a socket and adding it to the connection pool
  */
-ssize_t node_listen(const char* const address, const char* const port) {
+ssize_t socket_listen(const char* const address, const char* const port) {
   struct addrinfo* servinfo = {0};
 
   int socket_fd = initialize_socket(address, port, &servinfo);
@@ -70,7 +70,7 @@ ssize_t node_listen(const char* const address, const char* const port) {
 
   if (listen(socket_fd, MAX_CONNECTION_BACKLOG) == -1) {
     close(socket_fd);
-    fprintf(stderr, "node_listen() | failed to listen\n");
+    fprintf(stderr, "socket_listen() | failed to listen\n");
     freeaddrinfo(servinfo);
     return -1;
   }
@@ -81,10 +81,10 @@ ssize_t node_listen(const char* const address, const char* const port) {
 }
 
 /*
- * node_connect() - establish a connection to another node by creating
+ * socket_connect() - establish a connection to another node by creating
  * a socket and adding it to the connection pool
  */
-ssize_t node_connect(const char* const address, const char* const port) {
+ssize_t socket_connect(const char* const address, const char* const port) {
   struct addrinfo* servinfo = {0};
 
   int socket_fd = initialize_socket(address, port, &servinfo);
@@ -95,7 +95,7 @@ ssize_t node_connect(const char* const address, const char* const port) {
 
   if (connect(socket_fd, servinfo->ai_addr, servinfo->ai_addrlen) == -1) {
     close(socket_fd);
-    fprintf(stderr, "node_connect() | failed to connect\n");
+    fprintf(stderr, "socket_connect() | failed to connect\n");
     freeaddrinfo(servinfo);
     return -1;
   }
@@ -106,52 +106,23 @@ ssize_t node_connect(const char* const address, const char* const port) {
 }
 
 /*
-static int initialize_socket() {
-  int rv = 0;
-  int sockfd = 0;
-  struct addrinfo hints, *servinfo, *p;
-  memset(&hints, 0, sizeof hints);
+ * socket_accept(): calls accept() on listening
+ * socket and adds result to connection pool if appropriate
+ */
+ssize_t socket_accept(const int listener_socket_fd) {
+  struct addrinfo* servinfo = {0};
 
-  hints.ai_family = AF_UNSPEC;
-  hints.ai_socktype = SOCK_STREAM;
+  int socket_fd = accept(listener_socket_fd, servinfo, sizeof(struct sockaddr));
 
-  if ((rv = getaddrinfo(address, port, &hints, &servinfo)) != 0) {
-    fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
-    return 1;
-  }
-
-  // loop through all the results and connect to the first we can;
-  // break if the host/service combination can't be used for
-  // a socket, or the if the socket connection fails
-  for (p = servinfo; p != NULL; p = p->ai_next) {
-    (sockfd = socket(p->ai_family, p->ai_socktype, p->ai_protocol));
-    if (sockfd == -1) {
-      perror("client: socket");
+  if (socket_fd != -1) {
+    if (pool_add(socket_fd, false) != -1) {
+      return 0;
+    } else {
+      cleanup_socket(socket_fd);
     }
   }
-
-  if (p == NULL) {
-    fprintf(stderr, "client: failed to connect\n");
-    freeaddrinfo(servinfo);
-    return -1;
-  }
-
-  pool_add(fd);
-  freeaddrinfo(servinfo);
-  return 0;
+  return -1;
 }
-*/
-
-/*
- * node_disconnect(): terminate a connection to another node.
-
-ssize_t node_disconnect(const configuration* const config,
-                        const size_t connection_id) {
-  // TODO: Networking stuff here
-  (void)config;
-  return 0;
-}
- */
 
 /*
  * send_data(): given an established connection, send data to it

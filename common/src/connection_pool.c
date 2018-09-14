@@ -109,7 +109,31 @@ void pool_remove(const int socket_fd) {
  * message string. Returns a linked list of serialized messages that
  * must be deserialized.
  */
-serialized_message* pool_listen(void) { return NULL; }
+serialized_message* pool_listen(void) {
+  if (poll(connection_pool, (nfds_t)pool_size, POLL_TIMEOUT_PERIOD) == -1) {
+    return NULL;
+  } else {
+    // if we are listening for new connections, accept them and
+    // add them to the pool
+    if (pool_listener && (connection_pool[0].revents && POLLIN)) {
+      socket_accept(connection_pool[0]->fd);
+    }
+    // Otherwise, get first ready socket; knock out any
+    // closed sockets we find
+    for (size_t i = 1; i < pool_size; i++) {
+      if (connection_pool[i].revents && POLLIN) {
+        serialized_message* s_message =
+            recv_data(connection_pool[i]->fd, &data);
+        return s_message;
+      }
+      if (connection_pool[i].revents && POLLHUP) {
+        pool_remove(connection_pool[i]);
+      }
+    }
+  }
+
+  return NULL;
+}
 
 /*
  * pool_send(): send data to one of the connections in the pool.
