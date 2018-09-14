@@ -16,8 +16,8 @@
 /*
  * alloc_message(): message constructor
  */
-message* alloc_message(enum action_type action, const char* const key,
-                       const char* const value) {
+message* alloc_message(enum action_type action, const size_t connection_id,
+                       const char* const key, const char* const value) {
   message* message_data = calloc(1, sizeof(message));
   if (message_data == NULL) {
     fprintf(stderr,
@@ -26,6 +26,7 @@ message* alloc_message(enum action_type action, const char* const key,
   }
 
   message_data->action = action;
+  message_data->connection_id = connection_id;
 
   if (key != NULL) {
     message_data->key_size = strlen(key);
@@ -59,27 +60,18 @@ void free_message(message* message_data) {
  * send_message(): serialize a message structure, send it
  * to a connected host.
  */
-ssize_t send_message(const size_t connection_id, const enum action_type action,
-                     const char* const key, const char* const value) {
-  printf("send_message() | sending message %d %s %s\n", action, key, value);
-
-  message* message_data = alloc_message(action, key, value);
-  if (message_data == NULL) {
-    return -1;
-  }
-
+ssize_t send_message(const message* const message_data) {
   serialized_message* s_message = serialize(message_data);
   if (s_message == NULL) {
     free(message_data);
     return -1;
   }
 
-  ssize_t res = pool_send(connection_id, s_message);
-
+  ssize_t res = pool_send(s_message);
   fprintf(stdout, "send_message() | server reply: %ld\n", res);
+
   free_message(message_data);
-  free(s_message->data);
-  free(s_message);
+  free_serialized_message(s_message);
   return 0;
 }
 
@@ -96,7 +88,7 @@ message* recv_message() {
   }
 
   message* message_data = deserialize(s_message);
-  free(s_message->data);
-  free(s_message);
+
+  free_serialized_message(s_message);
   return message_data;
 }

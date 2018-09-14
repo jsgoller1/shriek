@@ -38,6 +38,7 @@ typedef struct configuration {
 
 typedef struct message {
   enum action_type action;
+  size_t connection_id;
   size_t key_size;
   size_t value_size;
   char* key;
@@ -45,6 +46,7 @@ typedef struct message {
 } message;
 
 typedef struct serialized_message {
+  size_t connection_id;
   size_t len;
   char* data;
 } serialized_message;

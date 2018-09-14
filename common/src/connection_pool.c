@@ -122,8 +122,7 @@ serialized_message* pool_listen(void) {
     // closed sockets we find
     for (size_t i = 1; i < pool_size; i++) {
       if (connection_pool[i].revents && POLLIN) {
-        serialized_message* s_message =
-            recv_data(connection_pool[i]->fd, &data);
+        serialized_message* s_message = recv_data(connection_pool[i]->fd);
         return s_message;
       }
       if (connection_pool[i].revents && POLLHUP) {
@@ -137,12 +136,7 @@ serialized_message* pool_listen(void) {
 
 /*
  * pool_send(): send data to one of the connections in the pool.
- * connection_id is the offset in the connection_pool at which
- * the correct pollfd containing the associated socket exists,
- * but this is opaque to connection_pool users.
  */
-ssize_t pool_send(size_t connection_id, serialized_message* s_message) {
-  (void)connection_id;
-  (void)s_message;
-  return 0;
+ssize_t pool_send(serialized_message* s_message) {
+  return send_data(s_message);
 }

@@ -116,71 +116,55 @@ ssize_t socket_accept(const int listener_socket_fd) {
 
   if (socket_fd != -1) {
     if (pool_add(socket_fd, false) != -1) {
+      // fprintf(stdout, "Accepted connection from %s\n", servinfo->ai_addr);
+      freeaddrinfo(servinfo);
       return 0;
     } else {
       cleanup_socket(socket_fd);
     }
   }
+
+  freeaddrinfo(servinfo);
   return -1;
 }
 
 /*
- * send_data(): given an established connection, send data to it
-char* send_data(const size_t connection_id,
-                const serialized_message* const s_message) {
-  char* reply = NULL;
-
+ * send_data(): send a serialized message to a socket
+ */
+ssize_t send_data(const serialized_message* const s_message) {
   if (s_message == NULL) {
     return NULL;
   }
-  printf("Sending to %lu\n", connection_id);
 
-  // TODO: Socket stuff goes here; in the meantime,
-  // dump the binary data to disk for examination.
-
-  FILE* out = fopen("serialized_data.bin", "w");
-  fwrite(s_message->data, s_message->len, 1, out);
-  fclose(out);
+  // TODO: this may result in partial sends
+  ssize_t reply =
+      send(s_message->connection_id, s_message->data, s_message->len, 0);
 
   return reply;
 }
- */
 
 /*
- * rev_data():
-
-serialized_message* recv_data() {
-  // TODO: Socket stuff goes here; in the meantime,
-  // read the binary data from disk.
-  struct stat buf;
-  if (stat("serialized_data.bin", &buf) == -1) {
+ * rev_data(): read data from a socket and return a serialized message
+ */
+serialized_message* recv_data(const int socket_fd) {
+  ssize_t len = 0;
+  // TODO: Recieve arbitrarily long messages, not just up to 300KB
+  char* data = calloc(1, sizeof(char) * KB(300));
+  if (data == NULL) {
     return NULL;
   }
 
-  FILE* in = fopen("serialized_data.bin", "r");
-  fseek(in, 0L, SEEK_END);
-  ssize_t sz = ftell(in);
-  rewind(in);
-  if (sz == -1) {
+  len = recv(socket_fd, data, KB(300), 0);
+  if (len == -1) {
+    free(data);
     return NULL;
   }
 
-  serialized_message* s_message = malloc(sizeof(serialized_message));
+  serialized_message* s_message =
+      alloc_serialized_message(socket_fd, data, len);
   if (s_message == NULL) {
-    fprintf(stderr, "recv_data() | Memory error.\n");
     return NULL;
   }
-  s_message->data = malloc(sizeof(char) * (size_t)sz);
-  s_message->len = (size_t)sz;
-  if (s_message->data == NULL) {
-    fprintf(stderr, "recv_data() | Memory error.\n");
-    free(s_message);
-    return NULL;
-  }
-  fread(s_message->data, (size_t)sz, 1, in);
-  fclose(in);
-  remove("serialized_data.bin");
 
   return s_message;
 }
-*/
