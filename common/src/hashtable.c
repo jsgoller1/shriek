@@ -40,6 +40,7 @@ void free_hashtable(hashtable_entry** ht, const size_t ht_size) {
       }
     }
   }
+  free(ht);
 }
 
 /*

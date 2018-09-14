@@ -15,7 +15,7 @@ int main(int argc, char** argv) {
   hashtable_entry** ht = NULL;
   configuration* config = parse_flags(argc, argv);
 
-  if (initialize_server(config, ht) == -1) {
+  if (initialize_server(config, &ht) == -1) {
     return -1;
   }
 
