@@ -34,7 +34,9 @@ client: clean
 	echo "set THIS_IS_A_TEST_MESSAGE IT_IS_PRETTY_GREAT" | $(VALGRIND) bin/$@
 	hexdump -C serialized_data.bin
 
-server: clean client
+server: clean
 	reset
 	$(COMPILE) -I $@/include/ $@/src/*.c -o bin/$@
 	$(VALGRIND) ./bin/$@
+
+shriek: clean client server
