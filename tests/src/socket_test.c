@@ -1,9 +1,11 @@
 #include <stdio.h>
 
-#include "sockets.c"
+#include "connection_pool.h"
+#include "sockets.h"
 
 int main() {
-  int socket_fd = node_listen("127.0.0.1", "49234");
-  printf("socket: %d\n", socket_fd);
+  initialize_connection_pool(1);
+  printf("result: %ld\n", node_listen("127.0.0.1", "49234"));
+  cleanup_connection_pool();
   return 0;
 }

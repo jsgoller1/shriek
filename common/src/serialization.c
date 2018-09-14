@@ -12,47 +12,62 @@
 #include "shriek_types.h"
 
 /*
- * serialize() - convert a message to a serialized binary message
+ * alloc_serialized_message() - serialized_message constructor
  */
-serialized_message* serialize(const message* const message_data) {
-  // Initialized serialized message and message buffer
-  serialized_message* s_message = malloc(sizeof(serialized_message));
+serialized_message* alloc_serialized_message(const size_t len) {
+  serialized_message* s_message = calloc(1, sizeof(serialized_message));
   if (s_message == NULL) {
     fprintf(stderr, "serialize() | Memory error. Quitting...\n");
     return NULL;
   }
-  memset(s_message, '\0', sizeof(serialized_message));
-  s_message->len =
-      (sizeof(size_t) * 3) +
-      sizeof(char) * (message_data->key_size + message_data->value_size);
+  s_message->len = len;
 
-  char* buffer = malloc(s_message->len);
-  if (buffer == NULL) {
+  s_message->data = calloc(1, s_message->len);
+  if (s_message->data == NULL) {
     fprintf(stderr, "serialize() | Memory error. Quitting...\n");
     free(s_message);
     return NULL;
   }
-  memset(buffer, '\0', s_message->len);
+
+  return s_message;
+}
+
+/*
+ * free_serialized_message() - serialized_message destructor
+ */
+void free_serialized_message(serialized_message* s_message) {
+  free(s_message->data);
+  free(s_message);
+}
+
+/*
+ * serialize() - convert a message to a serialized binary message
+ */
+serialized_message* serialize(const message* const message_data) {
+  // Initialized serialized message and message buffer
+  serialized_message* s_message = alloc_serialized_message(
+      (sizeof(size_t) * 3) +
+      sizeof(char) * (message_data->key_size + message_data->value_size));
 
   // Copy action and size fields to string buffer
-  memcpy(buffer, &(message_data->action), sizeof(size_t));
-  memcpy(buffer + sizeof(size_t), &(message_data->key_size), sizeof(size_t));
-  memcpy(buffer + (sizeof(size_t) * 2), &(message_data->value_size),
+  memcpy(s_message->data, &(message_data->action), sizeof(size_t));
+  memcpy(s_message->data + sizeof(size_t), &(message_data->key_size),
+         sizeof(size_t));
+  memcpy(s_message->data + (sizeof(size_t) * 2), &(message_data->value_size),
          sizeof(size_t));
 
   // Copy key data to buffer
   if (message_data->key != NULL) {
-    memcpy(buffer + (sizeof(size_t) * 3), message_data->key,
+    memcpy(s_message->data + (sizeof(size_t) * 3), message_data->key,
            message_data->key_size);
   }
 
   // Copy value data to buffer
   if (message_data->value != NULL) {
-    memcpy(buffer + ((sizeof(size_t) * 3) + message_data->key_size),
+    memcpy(s_message->data + ((sizeof(size_t) * 3) + message_data->key_size),
            message_data->value, message_data->value_size);
   }
 
-  s_message->data = buffer;
   return s_message;
 }
 

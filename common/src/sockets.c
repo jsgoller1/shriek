@@ -17,13 +17,14 @@
 #include "connection_pool.h"
 #include "serialization.h"
 #include "shriek_types.h"
+#include "sockets.h"
 
 /*
  * initialize_socket(): create a socket for use in either connecting
  * or listening.
  */
 int initialize_socket(const char* const address, const char* const port,
-                      struct addrinfo* servinfo) {
+                      struct addrinfo** servinfo) {
   int rv = 0;
   int socket_fd = 0;
   struct addrinfo hints, *p;
@@ -32,12 +33,12 @@ int initialize_socket(const char* const address, const char* const port,
   hints.ai_family = AF_UNSPEC;
   hints.ai_socktype = SOCK_STREAM;
 
-  if ((rv = getaddrinfo(address, port, &hints, &servinfo)) != 0) {
+  if ((rv = getaddrinfo(address, port, &hints, servinfo)) != 0) {
     fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
-    return 1;
+    return -1;
   }
 
-  for (p = servinfo; p != NULL; p = p->ai_next) {
+  for (p = *servinfo; p != NULL; p = p->ai_next) {
     socket_fd = socket(p->ai_family, p->ai_socktype, p->ai_protocol);
     if (socket_fd != -1) {
       return socket_fd;
@@ -59,8 +60,9 @@ void cleanup_socket(int sockfd) { close(sockfd); }
  * creating a socket and adding it to the connection pool
  */
 ssize_t node_listen(const char* const address, const char* const port) {
-  struct addrinfo* servinfo;
-  int socket_fd = initialize_socket(address, port, servinfo);
+  struct addrinfo* servinfo = {0};
+
+  int socket_fd = initialize_socket(address, port, &servinfo);
   if (socket_fd == -1) {
     freeaddrinfo(servinfo);
     return -1;
@@ -83,8 +85,9 @@ ssize_t node_listen(const char* const address, const char* const port) {
  * a socket and adding it to the connection pool
  */
 ssize_t node_connect(const char* const address, const char* const port) {
-  struct addrinfo* servinfo;
-  int socket_fd = initialize_socket(address, port, servinfo);
+  struct addrinfo* servinfo = {0};
+
+  int socket_fd = initialize_socket(address, port, &servinfo);
   if (socket_fd == -1) {
     freeaddrinfo(servinfo);
     return -1;
@@ -97,7 +100,7 @@ ssize_t node_connect(const char* const address, const char* const port) {
     return -1;
   }
 
-  pool_add(sockfd, false);
+  pool_add(socket_fd, false);
   freeaddrinfo(servinfo);
   return 0;
 }

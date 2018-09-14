@@ -39,9 +39,10 @@ server: clean
 	$(COMPILE) -I $@/include/ $@/src/*.c -o bin/$@
 	$(VALGRIND) ./bin/$@
 
-tests:
+tests: clean
 	reset
-	$(COMPILE) -I $@/include/ $@/src/socket_test.c -o bin/socket_test; ./socket_test
+	$(COMPILE) -I $@/include/ $@/src/socket_test.c -o bin/socket_test
+	$(VALGRIND) ./bin/socket_test
 
 
 shriek: clean client server

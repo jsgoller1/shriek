@@ -29,12 +29,6 @@ enum action_type {
   GET,
 };
 
-typedef struct connection_pool {
-  bool has_listener;
-  size_t size;
-  struct pollfd** connections;
-};
-
 typedef struct configuration {
   char* address;
   char* port;
@@ -48,7 +42,6 @@ typedef struct message {
   size_t value_size;
   char* key;
   char* value;
-  struct message* next_message;
 } message;
 
 typedef struct serialized_message {

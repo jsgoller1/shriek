@@ -8,8 +8,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "connection_pool.h"
 #include "messages.h"
-#include "net.h"
 #include "serialization.h"
 #include "shriek_types.h"
 
@@ -17,8 +17,7 @@
  * alloc_message(): message constructor
  */
 message* alloc_message(enum action_type action, const char* const key,
-                       const char* const value,
-                       const message* const next_message) {
+                       const char* const value) {
   message* message_data = calloc(1, sizeof(message));
   if (message_data == NULL) {
     fprintf(stderr,
@@ -27,7 +26,6 @@ message* alloc_message(enum action_type action, const char* const key,
   }
 
   message_data->action = action;
-  message_data->next_message = next_message;
 
   if (key != NULL) {
     message_data->key_size = strlen(key);
@@ -65,7 +63,7 @@ ssize_t send_message(const size_t connection_id, const enum action_type action,
                      const char* const key, const char* const value) {
   printf("send_message() | sending message %d %s %s\n", action, key, value);
 
-  message* message_data = alloc_message(action, key, value, NULL);
+  message* message_data = alloc_message(action, key, value);
   if (message_data == NULL) {
     return -1;
   }
@@ -76,27 +74,14 @@ ssize_t send_message(const size_t connection_id, const enum action_type action,
     return -1;
   }
 
-  char* reply = send_data(connection_id, s_message);
+  ssize_t res = pool_send(connection_id, s_message);
 
-  fprintf(stdout, "send_message() | server reply: %s\n", reply);
+  fprintf(stdout, "send_message() | server reply: %ld\n", res);
   free_message(message_data);
   free(s_message->data);
   free(s_message);
   return 0;
 }
-
-/*
- * reply_message(): After a message structure is recieved from recv_message(),
- * the correct reply may be sent to the sender by passing the message and the
- * desired response to this function.
-
-ssize_t reply_message(const message* const message_data,
-                      const char* const reply_data) {
-  (void)message_data;
-  (void)reply_data;
-  return 0;
-}
-*/
 
 /*
  * recv_message(): wait for a message to arrive, and return
@@ -105,7 +90,7 @@ ssize_t reply_message(const message* const message_data,
  * to check the next_message pointer!
  */
 message* recv_message() {
-  serialized_message* s_message = recv_data();
+  serialized_message* s_message = pool_listen();
   if (s_message == NULL) {
     return NULL;
   }
