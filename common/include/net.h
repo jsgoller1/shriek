@@ -2,7 +2,7 @@
 
 #include "shriek_types.h"
 
-extern struct pollfd* connection_pool[];
+extern connection_pool* pool;
 
 ssize_t node_connect(configuration* const config);
 ssize_t node_disconnect(const configuration* const config);

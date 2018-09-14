@@ -8,6 +8,7 @@
 
 #include "client.h"
 #include "config.h"
+#include "net.h"
 #include "shriek_types.h"
 
 /*
@@ -25,6 +26,10 @@ ssize_t initialize_client(configuration* const config, char** linep, char** key,
     config->port = strdup("9000");
   }
 
+  if (config->max_connections == NULL) {
+    config->max_connections = MAX_CONNECTIONS;
+  }
+
   // Initialize remaining data for client
   *linep = malloc(sizeof(char) * MAX_LINE);
   *key = malloc(sizeof(char) * MAX_KEY_SIZE);
@@ -37,17 +42,12 @@ ssize_t initialize_client(configuration* const config, char** linep, char** key,
     return -1;
   }
 
-  // TODO: Client fails if server doesn't exist, which is intended behavior
-  // but not helpful until networking in the server is actually implemented.
-  //
-
   // Initiate connection to server
-  /*
-    if (connect_to_server(*config) == -1) {
-      cleanup(*config, *linep, *key, *value);
-      return -1;
-    }
-  */
+  if (!(initialize_connection_pool(1) &&
+        node_connect(config->address, config->port))) {
+    cleanup(*config, *linep, *key, *value);
+    return -1;
+  }
 
   return 0;
 }
@@ -59,6 +59,7 @@ ssize_t initialize_client(configuration* const config, char** linep, char** key,
 void cleanup_client(configuration* config, char* linep, char* key,
                     char* value) {
   free_configuration(config);
+  cleanup_connection_pool();
   free(linep);
   free(key);
   free(value);

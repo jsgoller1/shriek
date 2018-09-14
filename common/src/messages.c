@@ -17,16 +17,18 @@
  * alloc_message(): message constructor
  */
 message* alloc_message(enum action_type action, const char* const key,
-                       const char* const value) {
-  message* message_data = malloc(sizeof(message));
+                       const char* const value,
+                       const message* const next_message) {
+  message* message_data = calloc(1, sizeof(message));
   if (message_data == NULL) {
     fprintf(stderr,
             "create_message() | Memory error while creating message.\n");
     return NULL;
   }
-  memset(message_data, '\0', sizeof(message));
 
   message_data->action = action;
+  message_data->next_message = next_message;
+
   if (key != NULL) {
     message_data->key_size = strlen(key);
     message_data->key = strdup(key);
@@ -63,7 +65,7 @@ ssize_t send_message(const size_t connection_id, const enum action_type action,
                      const char* const key, const char* const value) {
   printf("send_message() | sending message %d %s %s\n", action, key, value);
 
-  message* message_data = alloc_message(action, key, value);
+  message* message_data = alloc_message(action, key, value, NULL);
   if (message_data == NULL) {
     return -1;
   }
@@ -87,18 +89,20 @@ ssize_t send_message(const size_t connection_id, const enum action_type action,
  * reply_message(): After a message structure is recieved from recv_message(),
  * the correct reply may be sent to the sender by passing the message and the
  * desired response to this function.
- */
+
 ssize_t reply_message(const message* const message_data,
                       const char* const reply_data) {
   (void)message_data;
   (void)reply_data;
   return 0;
 }
+*/
 
 /*
- * recv_message(): poll the connection pool via poll(2) and
- * return the first complete message recieved, deserializing
- * it first.
+ * recv_message(): wait for a message to arrive, and return
+ * it deserialized if so. Note that because connections are
+ * multiplexed, multiple messages may arrive, so make sure
+ * to check the next_message pointer!
  */
 message* recv_message() {
   serialized_message* s_message = recv_data();
