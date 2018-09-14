@@ -22,11 +22,12 @@
  * initialize_socket(): create a socket for use in either connecting
  * or listening.
  */
-int initialize_socket() {
+int initialize_socket(const char* const address, const char* const port,
+                      struct addrinfo* servinfo) {
   int rv = 0;
-  int sockfd = 0;
-  struct addrinfo hints, *servinfo, *p;
-  memset(&hints, 0, sizeof hints);
+  int socket_fd = 0;
+  struct addrinfo hints, *p;
+  memset(&hints, 0, sizeof(hints));
 
   hints.ai_family = AF_UNSPEC;
   hints.ai_socktype = SOCK_STREAM;
@@ -36,25 +37,16 @@ int initialize_socket() {
     return 1;
   }
 
-  // loop through all the results and connect to the first we can;
-  // break if the host/service combination can't be used for
-  // a socket, or the if the socket connection fails
   for (p = servinfo; p != NULL; p = p->ai_next) {
-    (sockfd = socket(p->ai_family, p->ai_socktype, p->ai_protocol));
-    if (sockfd == -1) {
-      perror("client: socket");
+    socket_fd = socket(p->ai_family, p->ai_socktype, p->ai_protocol);
+    if (socket_fd != -1) {
+      return socket_fd;
     }
   }
 
-  if (p == NULL) {
-    fprintf(stderr, "client: failed to connect\n");
-    freeaddrinfo(servinfo);
-    return -1;
-  }
-
-  pool_add(fd);
-  freeaddrinfo(servinfo);
-  return 0;
+  fprintf(stderr, "initialize_socket() | failed to create socket to %s:%s\n",
+          address, port);
+  return -1;
 }
 
 /*
@@ -66,18 +58,22 @@ void cleanup_socket(int sockfd) { close(sockfd); }
  * node_listen() - begin listening for incoming connections by
  * creating a socket and adding it to the connection pool
  */
-ssize_t node_listen(const char* const addr, const char* const port) {
+ssize_t node_listen(const char* const address, const char* const port) {
   struct addrinfo* servinfo;
-  int sockfd = initialize_socket(servinfo);
+  int socket_fd = initialize_socket(address, port, servinfo);
+  if (socket_fd == -1) {
+    freeaddrinfo(servinfo);
+    return -1;
+  }
 
-  if (listen(sockfd, MAX_CONNECTION_BACKLOG) == -1) {
-    close(sockfd);
+  if (listen(socket_fd, MAX_CONNECTION_BACKLOG) == -1) {
+    close(socket_fd);
     fprintf(stderr, "node_listen() | failed to listen\n");
     freeaddrinfo(servinfo);
     return -1;
   }
 
-  pool_add(sockfd, true);
+  pool_add(socket_fd, true);
   freeaddrinfo(servinfo);
   return 0;
 }
@@ -86,12 +82,16 @@ ssize_t node_listen(const char* const addr, const char* const port) {
  * node_connect() - establish a connection to another node by creating
  * a socket and adding it to the connection pool
  */
-ssize_t node_connect(const char* const addr, const char* const port) {
+ssize_t node_connect(const char* const address, const char* const port) {
   struct addrinfo* servinfo;
-  int sockfd = initialize_socket(servinfo);
+  int socket_fd = initialize_socket(address, port, servinfo);
+  if (socket_fd == -1) {
+    freeaddrinfo(servinfo);
+    return -1;
+  }
 
-  if (connect(sockfd, servinfo->ai_addr, servinfo->ai_addrlen) == -1) {
-    close(sockfd);
+  if (connect(socket_fd, servinfo->ai_addr, servinfo->ai_addrlen) == -1) {
+    close(socket_fd);
     fprintf(stderr, "node_connect() | failed to connect\n");
     freeaddrinfo(servinfo);
     return -1;

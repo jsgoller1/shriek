@@ -101,3 +101,13 @@ void pool_remove(const int socket_fd) {
     }
   }
 }
+
+/*
+ * pool_listen(): listen via poll() against
+ * multiple sockets; if a listener socket is present and
+ * ready, initiate new connections and add them to the pool.
+ * For other sockets, read data from them into a serialized
+ * message string. Returns a linked list of serialized messages that
+ * must be deserialized.
+ */
+serialized_message* pool_listen(void);
