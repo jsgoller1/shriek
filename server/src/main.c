@@ -2,6 +2,7 @@
 #include <stdlib.h>
 
 #include "messages.h"
+#include "misc.h"
 #include "net.h"
 #include "server.h"
 #include "shriek_types.h"
@@ -19,7 +20,7 @@ int main(int argc, char** argv) {
   }
 
   printf("Starting shriek server...\n");
-  while ((message_data = listen_for_messages(config)) != NULL) {
+  while ((message_data = recv_message()) != NULL) {
     if (message_data->action == GET) {
       printf("GET: %s - %s\n", message_data->key,
              hash_get(ht, message_data->key));

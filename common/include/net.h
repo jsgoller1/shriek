@@ -9,4 +9,4 @@ ssize_t node_disconnect(const configuration* const config);
 
 char* send_data(const size_t connection_id,
                 const serialized_message* const s_message);
-serialized_message* recv_data(const configuration* const config);
+serialized_message* recv_data(void);

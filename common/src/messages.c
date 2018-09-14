@@ -100,8 +100,8 @@ ssize_t reply_message(const message* const message_data,
  * return the first complete message recieved, deserializing
  * it first.
  */
-message* recv_message(const configuration* const config) {
-  serialized_message* s_message = recv_data(config);
+message* recv_message() {
+  serialized_message* s_message = recv_data();
   if (s_message == NULL) {
     return NULL;
   }

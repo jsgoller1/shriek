@@ -10,16 +10,6 @@
 #include "shriek_types.h"
 
 /*
- * parse_flags_client() - parse argc/argv into configuration structure
- * needed for initialization
- */
-configuration* parse_flags_client(const int argc, char* const* const argv) {
-  (void)argc;
-  (void)argv;
-  return NULL;
-}
-
-/*
  * initialize_client(): Set up all necessary data structures for client
  * operation
  */

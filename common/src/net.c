@@ -10,8 +10,8 @@
  * pool, or an error will be thrown and the connection will be closed.
  *
  * Shriek clients and servers both use this library; clients may establish
- * new connections manually and should leave connection_pool[0] empty so that
- * it is skipped by connections_listen();
+ * new connections manually and should leave connection_pool[0] set to NULL
+ * so that it is skipped by connections_listen();
  */
 
 #include <netdb.h>
@@ -72,7 +72,8 @@ ssize_t node_connect(configuration* const config) {
     return -1;
   }
 
-  config->socket = sockfd;
+  // TODO: add socket to connection pool here
+
   freeaddrinfo(servinfo);
   return 0;
 }
@@ -111,10 +112,9 @@ char* send_data(const size_t connection_id,
 /*
  * rev_data():
  */
-serialized_message* recv_data(const configuration* const config) {
+serialized_message* recv_data() {
   // TODO: Socket stuff goes here; in the meantime,
   // read the binary data from disk.
-  (void)config;
   struct stat buf;
   if (stat("serialized_data.bin", &buf) == -1) {
     return NULL;

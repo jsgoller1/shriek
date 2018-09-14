@@ -9,4 +9,4 @@ ssize_t send_message(const size_t connection_id, const enum action_type action,
                      const char* const key, const char* const value);
 ssize_t reply_message(const message* const message_data,
                       const char* const reply_data);
-message* recv_message(const configuration* const config);
+message* recv_message(void);

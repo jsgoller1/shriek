@@ -4,6 +4,7 @@
 
 #include "client.h"
 #include "messages.h"
+#include "misc.h"
 #include "net.h"
 #include "shriek_types.h"
 
@@ -15,7 +16,7 @@ int main(int argc, char** argv) {
   char* linep = NULL;
   char* key = NULL;
   char* value = NULL;
-  configuration* config = parse_flags_client(argc, argv);
+  configuration* config = parse_flags(argc, argv);
   if (initialize_client(&config, &linep, &key, &value) == -1) {
     return -1;
   }

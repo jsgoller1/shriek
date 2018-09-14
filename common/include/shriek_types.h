@@ -25,7 +25,7 @@ enum action_type {
 typedef struct configuration {
   char* address;
   char* port;
-  int socket;
+  size_t hashtable_size;
 } configuration;
 
 typedef struct message {
