@@ -6,7 +6,7 @@ ANALYZER:=scan-build
 
 ### Compiler settings
 CC:=clang
-CFLAGS :=-std=gnu11 -g -lm
+CFLAGS :=-std=gnu11 -g -lm # NOTE: -v shows all paths Clang searches for headers
 WARNINGS :=-Weverything -Werror
 INCLUDES :=-I common/include
 LIBS := common/src/*.c
@@ -28,11 +28,13 @@ clean:
 .PHONY: client server
 
 client: clean
+	reset
 	-rm serialized_data.bin
 	$(COMPILE) -I $@/include/ $@/src/*.c -o bin/$@
 	echo "set THIS_IS_A_TEST_MESSAGE IT_IS_PRETTY_GREAT" | $(VALGRIND) bin/$@
 	hexdump -C serialized_data.bin
 
 server: clean client
+	reset
 	$(COMPILE) -I $@/include/ $@/src/*.c -o bin/$@
 	$(VALGRIND) ./bin/$@
