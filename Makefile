@@ -25,7 +25,7 @@ setup:
 clean:
 	-rm -r bin/*
 
-.PHONY: client server
+.PHONY: client server tests
 
 client: clean
 	reset
@@ -38,5 +38,10 @@ server: clean
 	reset
 	$(COMPILE) -I $@/include/ $@/src/*.c -o bin/$@
 	$(VALGRIND) ./bin/$@
+
+tests:
+	reset
+	$(COMPILE) -I $@/include/ $@/src/socket_test.c -o bin/socket_test; ./socket_test
+
 
 shriek: clean client server
