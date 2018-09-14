@@ -8,8 +8,9 @@
 
 #include "client.h"
 #include "config.h"
-#include "net.h"
+#include "connection_pool.h"
 #include "shriek_types.h"
+#include "sockets.h"
 
 /*
  * initialize_client(): Set up all necessary data structures for client
@@ -26,7 +27,7 @@ ssize_t initialize_client(configuration* const config, char** linep, char** key,
     config->port = strdup("9000");
   }
 
-  if (config->max_connections == NULL) {
+  if (config->max_connections == 0) {
     config->max_connections = MAX_CONNECTIONS;
   }
 
@@ -44,8 +45,8 @@ ssize_t initialize_client(configuration* const config, char** linep, char** key,
 
   // Initiate connection to server
   if (!(initialize_connection_pool(1) &&
-        node_connect(config->address, config->port))) {
-    cleanup(*config, *linep, *key, *value);
+        socket_connect(config->address, config->port))) {
+    cleanup_client(config, *linep, *key, *value);
     return -1;
   }
 

@@ -110,21 +110,20 @@ ssize_t socket_connect(const char* const address, const char* const port) {
  * socket and adds result to connection pool if appropriate
  */
 ssize_t socket_accept(const int listener_socket_fd) {
-  struct addrinfo* servinfo = {0};
+  struct sockaddr* saddr = {0};
+  unsigned int saddr_len = (sizeof(struct sockaddr));
 
-  int socket_fd = accept(listener_socket_fd, servinfo, sizeof(struct sockaddr));
+  int socket_fd = accept(listener_socket_fd, saddr, &saddr_len);
 
   if (socket_fd != -1) {
     if (pool_add(socket_fd, false) != -1) {
-      // fprintf(stdout, "Accepted connection from %s\n", servinfo->ai_addr);
-      freeaddrinfo(servinfo);
+      // fprintf(stdout, "Accepted connection from %s\n", saddr->ai_addr);
       return 0;
     } else {
       cleanup_socket(socket_fd);
     }
   }
 
-  freeaddrinfo(servinfo);
   return -1;
 }
 
@@ -133,12 +132,12 @@ ssize_t socket_accept(const int listener_socket_fd) {
  */
 ssize_t send_data(const serialized_message* const s_message) {
   if (s_message == NULL) {
-    return NULL;
+    return -1;
   }
 
   // TODO: this may result in partial sends
   ssize_t reply =
-      send(s_message->connection_id, s_message->data, s_message->len, 0);
+      send((int)s_message->connection_id, s_message->data, s_message->len, 0);
 
   return reply;
 }
@@ -161,7 +160,7 @@ serialized_message* recv_data(const int socket_fd) {
   }
 
   serialized_message* s_message =
-      alloc_serialized_message(socket_fd, data, len);
+      alloc_serialized_message(socket_fd, data, (size_t)len);
   if (s_message == NULL) {
     return NULL;
   }

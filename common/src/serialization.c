@@ -17,8 +17,8 @@
  * is not null, the passed pointer is set as the data field in the returned
  * serialized message
  */
-serialized_message* alloc_serialized_message(const size_t connection_id,
-                                             char* const char* data,
+serialized_message* alloc_serialized_message(const int connection_id,
+                                             char* const data,
                                              const size_t len) {
   serialized_message* s_message = calloc(1, sizeof(serialized_message));
   if (s_message == NULL) {
@@ -57,7 +57,7 @@ void free_serialized_message(serialized_message* s_message) {
 serialized_message* serialize(message* const message_data) {
   // Initialized serialized message and message buffer
   serialized_message* s_message = alloc_serialized_message(
-      connection_id, NULL,
+      message_data->connection_id, NULL,
       (sizeof(size_t) * 3) +
           (sizeof(char) * (message_data->key_size + message_data->value_size)));
   if (s_message == NULL) {
@@ -89,7 +89,7 @@ serialized_message* serialize(message* const message_data) {
 /*
  * deserialize() - convert a serialized message to a message struct
  */
-message* deserialize(serialized_message* s_message) {
+message* deserialize(const serialized_message* const s_message) {
   enum action_type action = 0;
   size_t key_size = 0;
   size_t value_size = 0;

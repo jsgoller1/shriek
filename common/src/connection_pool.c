@@ -116,17 +116,17 @@ serialized_message* pool_listen(void) {
     // if we are listening for new connections, accept them and
     // add them to the pool
     if (pool_listener && (connection_pool[0].revents && POLLIN)) {
-      socket_accept(connection_pool[0]->fd);
+      socket_accept(connection_pool[0].fd);
     }
     // Otherwise, get first ready socket; knock out any
     // closed sockets we find
     for (size_t i = 1; i < pool_size; i++) {
-      if (connection_pool[i].revents && POLLIN) {
-        serialized_message* s_message = recv_data(connection_pool[i]->fd);
+      if (connection_pool[i].revents & POLLIN) {
+        serialized_message* s_message = recv_data(connection_pool[i].fd);
         return s_message;
       }
-      if (connection_pool[i].revents && POLLHUP) {
-        pool_remove(connection_pool[i]);
+      if (connection_pool[i].revents & POLLHUP) {
+        pool_remove(connection_pool[i].fd);
       }
     }
   }

@@ -16,7 +16,7 @@
 /*
  * alloc_message(): message constructor
  */
-message* alloc_message(enum action_type action, const size_t connection_id,
+message* alloc_message(enum action_type action, const int connection_id,
                        const char* const key, const char* const value) {
   message* message_data = calloc(1, sizeof(message));
   if (message_data == NULL) {
@@ -60,7 +60,7 @@ void free_message(message* message_data) {
  * send_message(): serialize a message structure, send it
  * to a connected host.
  */
-ssize_t send_message(const message* const message_data) {
+ssize_t send_message(message* const message_data) {
   serialized_message* s_message = serialize(message_data);
   if (s_message == NULL) {
     free(message_data);
