@@ -5,7 +5,6 @@
 #include "client.h"
 #include "config.h"
 #include "messages.h"
-#include "net.h"
 #include "shriek_types.h"
 
 /*

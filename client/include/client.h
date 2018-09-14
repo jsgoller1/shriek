@@ -5,6 +5,9 @@
 #include "shriek_types.h"
 
 #define MAX_LINE MAX_KEY_SIZE + MAX_VAL_SIZE
+
+// The client only has one connection which is never
+// a listener, so this may be hardcoded.
 #define SERVER_CONNECTION_ID 1
 
 configuration* parse_flags_client(const int argc, char* const* const argv);
