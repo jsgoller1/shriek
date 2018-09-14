@@ -1,14 +1,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "config.h"
 #include "messages.h"
-#include "misc.h"
 #include "net.h"
 #include "server.h"
 #include "shriek_types.h"
 
 /*
- * main() - entrypoint for server
+ * main() - entrypoint for Shriek server
  */
 int main(int argc, char** argv) {
   message* message_data = NULL;

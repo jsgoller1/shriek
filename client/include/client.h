@@ -8,6 +8,6 @@
 #define SERVER_CONNECTION_ID 1
 
 configuration* parse_flags_client(const int argc, char* const* const argv);
-ssize_t initialize_client(configuration** const config, char** linep,
-                          char** key, char** value);
-void cleanup(configuration* config, char* linep, char* key, char* value);
+ssize_t initialize_client(configuration* const config, char** linep, char** key,
+                          char** value);
+void cleanup_client(configuration* config, char* linep, char* key, char* value);

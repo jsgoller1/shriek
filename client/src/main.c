@@ -3,8 +3,8 @@
 #include <string.h>
 
 #include "client.h"
+#include "config.h"
 #include "messages.h"
-#include "misc.h"
 #include "net.h"
 #include "shriek_types.h"
 
@@ -17,7 +17,8 @@ int main(int argc, char** argv) {
   char* key = NULL;
   char* value = NULL;
   configuration* config = parse_flags(argc, argv);
-  if (initialize_client(&config, &linep, &key, &value) == -1) {
+
+  if (initialize_client(config, &linep, &key, &value) == -1) {
     return -1;
   }
 
@@ -42,6 +43,6 @@ int main(int argc, char** argv) {
     printf("> ");
   }
 
-  cleanup(config, linep, key, value);
+  cleanup_client(config, linep, key, value);
   return 0;
 }

@@ -7,68 +7,47 @@
 #include <string.h>
 
 #include "client.h"
+#include "config.h"
 #include "shriek_types.h"
 
 /*
  * initialize_client(): Set up all necessary data structures for client
  * operation
  */
-ssize_t initialize_client(configuration** const config, char** linep,
-                          char** key, char** value) {
-  // Initialize config struct
-  *config = calloc(1, sizeof(configuration));
-  if (*config == NULL) {
-    fprintf(stderr, "initialize_client() | Memory error. Quitting...");
-    return -1;
+ssize_t initialize_client(configuration* const config, char** linep, char** key,
+                          char** value) {
+  // Initialize default values
+  if (config->address == NULL) {
+    config->address = strdup("127.0.0.1");
   }
 
-  // TODO: Parse addr/port out of the flag settings;
-  // this should be handled by a parse_flags()
-  // function, but for now, just hardcode to localhost
-  (*config)->address = strdup("127.0.0.1");
-  if ((*config)->address == NULL) {
-    fprintf(stderr, "initialize_client() | Memory error. Quitting...");
-    cleanup(*config, *linep, *key, *value);
-    return -1;
+  if (config->port == NULL) {
+    config->port = strdup("9000");
   }
-  (*config)->port = strdup("9000");
-  if ((*config)->port == NULL) {
+
+  // Initialize remaining data for client
+  *linep = malloc(sizeof(char) * MAX_LINE);
+  *key = malloc(sizeof(char) * MAX_KEY_SIZE);
+  *value = malloc(sizeof(char) * MAX_VAL_SIZE);
+
+  // Null pointer checks
+  if (!(config->address && config->port && *linep && *key && *value)) {
     fprintf(stderr, "initialize_client() | Memory error. Quitting...");
-    cleanup(*config, *linep, *key, *value);
+    cleanup_client(config, *linep, *key, *value);
     return -1;
   }
 
   // TODO: Client fails if server doesn't exist, which is intended behavior
   // but not helpful until networking in the server is actually implemented.
   //
+
+  // Initiate connection to server
   /*
     if (connect_to_server(*config) == -1) {
       cleanup(*config, *linep, *key, *value);
       return -1;
     }
   */
-
-  // Initialize remaining data for client
-  *linep = malloc(sizeof(char) * MAX_LINE);
-  if (*linep == NULL) {
-    fprintf(stderr, "initialize_client() | Memory error. Quitting...");
-    cleanup(*config, *linep, *key, *value);
-    return -1;
-  }
-
-  *key = malloc(sizeof(char) * MAX_KEY_SIZE);
-  if (*key == NULL) {
-    fprintf(stderr, "initialize_client() | Memory error. Quitting...");
-    cleanup(*config, *linep, *key, *value);
-    return -1;
-  }
-
-  *value = malloc(sizeof(char) * MAX_VAL_SIZE);
-  if (*value == NULL) {
-    fprintf(stderr, "initialize_client() | Memory error. Quitting...");
-    cleanup(*config, *linep, *key, *value);
-    return -1;
-  }
 
   return 0;
 }
@@ -77,10 +56,9 @@ ssize_t initialize_client(configuration** const config, char** linep,
  * cleanup_client(): Ensures all client structures are properly freed
  * prior to shutdown
  */
-void cleanup(configuration* config, char* linep, char* key, char* value) {
-  free(config->address);
-  free(config->port);
-  free(config);
+void cleanup_client(configuration* config, char* linep, char* key,
+                    char* value) {
+  free_configuration(config);
   free(linep);
   free(key);
   free(value);
