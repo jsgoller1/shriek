@@ -17,7 +17,7 @@
  * is not null, the passed pointer is set as the data field in the returned
  * serialized message
  */
-serialized_message* alloc_serialized_message(const int connection_id,
+serialized_message* alloc_serialized_message(const ssize_t connection_id,
                                              char* const data,
                                              const size_t len) {
   serialized_message* s_message = calloc(1, sizeof(serialized_message));

@@ -44,8 +44,15 @@ ssize_t initialize_client(configuration* const config, char** linep, char** key,
   }
 
   // Initiate connection to server
-  if (!(initialize_connection_pool(1) &&
-        socket_connect(config->address, config->port))) {
+  if (initialize_connection_pool(1) == -1) {
+    fprintf(stderr,
+            "initialize_client() | couldn't initialize connection pool.\n");
+    cleanup_client(config, *linep, *key, *value);
+    return -1;
+  }
+
+  if (socket_connect(config->address, config->port) == -1) {
+    fprintf(stderr, "initialize_client() | couldn't connect to server.\n");
     cleanup_client(config, *linep, *key, *value);
     return -1;
   }

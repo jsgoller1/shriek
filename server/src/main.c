@@ -11,7 +11,7 @@
  */
 int main(int argc, char** argv) {
   hashtable_entry** ht = NULL;
-  message *message_data = NULL, *reply = NULL;
+  message* sent = NULL;
   char *reply_key = NULL, *reply_value = NULL;
 
   // Setup
@@ -25,24 +25,16 @@ int main(int argc, char** argv) {
   }
 
   printf("Started Shriek server on %s:%s.\n", config->address, config->port);
-  while ((message_data = recv_message()) != NULL) {
-    if (message_data->action == GET) {
-      reply_key = message_data->key;
-      reply_value = hash_get(ht, message_data->key);
-    } else if (message_data->action == SET) {
-      hash_set(ht, message_data->key, message_data->value);
+  while ((sent = recv_message()) != NULL) {
+    if (sent->action == GET) {
+      reply_value = hash_get(ht, sent->key);
+      send_message(REPLY, sent->connection_id, sent->key, reply_value);
+    } else if (sent->action == SET) {
+      hash_set(ht, sent->key, sent->value);
       reply_key = "0";
-      reply_value = "0";
-    } else {
-      reply_key = "ERROR";
-      reply_value = "ERROR";
+      send_message(REPLY, sent->connection_id, reply_key, NULL);
     }
-    reply = alloc_message(REPLY, message_data->connection_id, reply_key,
-                          reply_value);
-    send_message(reply);
-
-    free_message(reply);
-    free_message(message_data);
+    free_message(sent);
   }
 
   cleanup_server(config, ht);

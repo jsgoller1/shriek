@@ -147,6 +147,7 @@ ssize_t send_data(const serialized_message* const s_message) {
   }
 
   // TODO: this may result in partial sends
+  // TODO: convert to network byte order
   ssize_t reply =
       send((int)s_message->connection_id, s_message->data, s_message->len, 0);
 
@@ -164,6 +165,7 @@ serialized_message* recv_data(const int socket_fd) {
     return NULL;
   }
 
+  // TODO: convert from network byte order
   len = recv(socket_fd, data, KB(300), 0);
   if (len == -1) {
     free(data);

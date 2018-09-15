@@ -15,6 +15,7 @@ int main(int argc, char** argv) {
   char* linep = NULL;
   char* key = NULL;
   char* value = NULL;
+  message* reply = NULL;
   configuration* config = parse_flags(argc, argv);
 
   if (initialize_client(config, &linep, &key, &value) == -1) {
@@ -26,12 +27,18 @@ int main(int argc, char** argv) {
     // TODO: sscanf can overflow the max key size / max val size; maybe
     // realloc() each based on size of linep?
     if (sscanf(linep, "get %s", key) == 1) {
-      if (send_message(SERVER_CONNECTION_ID, GET, key, NULL) == 0) {
-        printf("OK\n");
+      if (send_message(GET, SERVER_CONNECTION_ID, key, NULL) == 0) {
+        reply = recv_message();
+        printf("%s\n", reply->key);
       }
     } else if (sscanf(linep, "set %s %s", key, value) == 2) {
-      if (send_message(SERVER_CONNECTION_ID, SET, key, value) == 0) {
-        printf("OK\n");
+      if (send_message(SET, SERVER_CONNECTION_ID, key, value) == 0) {
+        reply = recv_message();
+        if (reply->key_size == 1 && reply->key[0] == '0') {
+          printf("OK\n");
+        } else {
+          printf("ERROR\n");
+        }
       }
     } else if (strcmp(linep, "exit\n") == 0) {
       printf("Quitting...\n");
@@ -40,6 +47,7 @@ int main(int argc, char** argv) {
       printf("Invalid command.\n");
     }
     printf("> ");
+    free_message(reply);
   }
 
   cleanup_client(config, linep, key, value);

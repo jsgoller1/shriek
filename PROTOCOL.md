@@ -45,16 +45,16 @@ VAL (optional, VAL_SIZE bytes)
 
 #### Protocol behavior
 * If `GET` is sent, the server should send back a `REPLY` with the same `KEY_SIZE` and `KEY` fields.
-If the data in `KEY` represents a key in the server's hashtable, the associatied value should be sent in
-`VAL` and the size of `VAL` should be sent in `VAL_SIZE`. Otherwise, `VAL_SIZE` should be 0 and no data should
-be placed in `VAL`.
-* If a `SET` is sent, the server should send back a `REPLY` with `KEY_SIZE` 1 and `VAL_SIZE` 0. `KEY` should be
-set to `0xFF` if an error occurred, and `0x00` if the key was successfully installed for the value on the server.
+If the data in `KEY` represents a key in the server's hashtable, the associatied value should be
+sent in `VAL` and the size of `VAL` should be sent in `VAL_SIZE`. Otherwise, `VAL_SIZE` should be 0
+and no data should be placed in `VAL`.
+* If a `SET` is sent, the server should send back a `REPLY` with `KEY_SIZE` 1. `KEY` should
+be set to `1` if an error occurred, and `0` if the key was successfully installed for the
+value on the server.
 * `REPLY` may never be sent first; it can only be sent back to a node that has
 already sent a `GET` or a `SET` first.
 
 ## v1
-
 The v1 protocol is a stateless protocol. Every message receives a reply, unless the connection dies.
 In the v2
 

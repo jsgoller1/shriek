@@ -31,8 +31,7 @@ client: clean
 	reset
 	-rm serialized_data.bin
 	$(COMPILE) -I $@/include/ $@/src/*.c -o bin/$@
-	echo "set THIS_IS_A_TEST_MESSAGE IT_IS_PRETTY_GREAT" | $(VALGRIND) bin/$@
-	hexdump -C serialized_data.bin
+	$(VALGRIND) bin/$@
 
 server: clean
 	reset
