@@ -25,6 +25,7 @@ static struct pollfd* connection_pool = NULL;
  */
 ssize_t initialize_connection_pool(const size_t size) {
   // always create at least one socket for listening
+  pool_size = size;
   connection_pool = calloc(pool_size + 1, sizeof(struct pollfd));
   if (connection_pool == NULL) {
     fprintf(stderr, "initialize_connection_pool() | Memory error\n");
@@ -34,7 +35,7 @@ ssize_t initialize_connection_pool(const size_t size) {
 
   // initialize all socket fds to -1 to prevent poll()
   // from recieving stdin
-  for (size_t i = 0; i < size; i++) {
+  for (size_t i = 0; i < pool_size; i++) {
     connection_pool[i].fd = -1;
   }
 
@@ -84,6 +85,7 @@ ssize_t pool_add(const int socket_fd, bool listening) {
   connection_pool[i].fd = socket_fd;
   connection_pool[i].events = (POLLIN);
   connection_pool[i].revents = (short)0;
+  printf("pool_add() | installed connection at connection_pool[%lu]\n", i);
   return 0;
 }
 
@@ -110,9 +112,7 @@ void pool_remove(const int socket_fd) {
  * must be deserialized.
  */
 serialized_message* pool_listen(void) {
-  if (poll(connection_pool, (nfds_t)pool_size, POLL_TIMEOUT_PERIOD) == -1) {
-    return NULL;
-  } else {
+  while (poll(connection_pool, (nfds_t)pool_size, POLL_TIMEOUT_PERIOD) != -1) {
     // if we are listening for new connections, accept them and
     // add them to the pool
     if (pool_listener && (connection_pool[0].revents && POLLIN)) {
@@ -122,6 +122,7 @@ serialized_message* pool_listen(void) {
     // closed sockets we find
     for (size_t i = 1; i < pool_size; i++) {
       if (connection_pool[i].revents & POLLIN) {
+        printf("pool_listen() | connection_pool[%lu] ready for reading.\n", i);
         serialized_message* s_message = recv_data(connection_pool[i].fd);
         return s_message;
       }

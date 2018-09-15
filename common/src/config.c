@@ -6,6 +6,7 @@
 
 #include "config.h"
 #include "shriek_types.h"
+#include "string.h"
 
 /*
  * alloc_config(): configuration constructor
@@ -39,6 +40,13 @@ configuration* parse_flags(const int argc, char* const* const argv) {
 
   configuration* config = alloc_configuration();
   if (config == NULL) {
+    return NULL;
+  }
+
+  config->address = strdup("127.0.0.1");
+  config->port = strdup("6666");
+  if (!(config->address && config->port)) {
+    free_configuration(config);
     return NULL;
   }
 

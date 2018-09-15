@@ -3,7 +3,6 @@
 
 #include "config.h"
 #include "messages.h"
-#include "net.h"
 #include "server.h"
 #include "shriek_types.h"
 
@@ -11,26 +10,38 @@
  * main() - entrypoint for Shriek server
  */
 int main(int argc, char** argv) {
-  message* message_data = NULL;
   hashtable_entry** ht = NULL;
+  message *message_data = NULL, *reply = NULL;
+  char *reply_key = NULL, *reply_value = NULL;
+
+  // Setup
   configuration* config = parse_flags(argc, argv);
+  if (config == NULL) {
+    return -1;
+  }
 
   if (initialize_server(config, &ht) == -1) {
     return -1;
   }
 
-  printf("Starting shriek server...\n");
+  printf("Started Shriek server on %s:%s.\n", config->address, config->port);
   while ((message_data = recv_message()) != NULL) {
     if (message_data->action == GET) {
-      printf("GET: %s - %s\n", message_data->key,
-             hash_get(ht, message_data->key));
+      reply_key = message_data->key;
+      reply_value = hash_get(ht, message_data->key);
     } else if (message_data->action == SET) {
       hash_set(ht, message_data->key, message_data->value);
-      printf("SET: %s - %s\n", message_data->key,
-             hash_get(ht, message_data->key));
+      reply_key = "0";
+      reply_value = "0";
     } else {
-      fprintf(stderr, "Invalid command.\n");
+      reply_key = "ERROR";
+      reply_value = "ERROR";
     }
+    reply = alloc_message(REPLY, message_data->connection_id, reply_key,
+                          reply_value);
+    send_message(reply);
+
+    free_message(reply);
     free_message(message_data);
   }
 

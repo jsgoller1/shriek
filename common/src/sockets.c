@@ -5,6 +5,7 @@
  * (see README.md)
  */
 
+#include <arpa/inet.h>
 #include <netdb.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -41,6 +42,7 @@ int initialize_socket(const char* const address, const char* const port,
   for (p = *servinfo; p != NULL; p = p->ai_next) {
     socket_fd = socket(p->ai_family, p->ai_socktype, p->ai_protocol);
     if (socket_fd != -1) {
+      bind(socket_fd, p->ai_addr, p->ai_addrlen);
       return socket_fd;
     }
   }
@@ -107,24 +109,33 @@ ssize_t socket_connect(const char* const address, const char* const port) {
 
 /*
  * socket_accept(): calls accept() on listening
- * socket and adds result to connection pool if appropriate
+ * socket and adds result to connection pool if appropriate.
+ * https://stackoverflow.com/questions/2064636/getting-the-source-address-of-an-incoming-socket-connection
  */
 ssize_t socket_accept(const int listener_socket_fd) {
-  struct sockaddr* saddr = {0};
-  unsigned int saddr_len = (sizeof(struct sockaddr));
+  struct sockaddr_storage addr = {0};
+  socklen_t len = sizeof(addr);
+  char ipstr[INET6_ADDRSTRLEN] = {0};
+  int port = 0;
 
-  int socket_fd = accept(listener_socket_fd, saddr, &saddr_len);
+  int new_socket_fd = accept(listener_socket_fd, (struct sockaddr*)&addr, &len);
 
-  if (socket_fd != -1) {
-    if (pool_add(socket_fd, false) != -1) {
-      // fprintf(stdout, "Accepted connection from %s\n", saddr->ai_addr);
-      return 0;
-    } else {
-      cleanup_socket(socket_fd);
-    }
+  if (new_socket_fd == -1) {
+    fprintf(stderr, "Couldn't accept incoming connection.\n");
+    return -1;
   }
 
-  return -1;
+  if (pool_add(new_socket_fd, false) == -1) {
+    fprintf(stderr, "Couldn't add incoming connection to pool.\n");
+    cleanup_socket(new_socket_fd);
+  }
+
+  struct sockaddr_in* s_in = (struct sockaddr_in*)&addr;
+  port = ntohs(s_in->sin_port);
+  inet_ntop(AF_INET, &(s_in->sin_addr), ipstr, sizeof(ipstr));
+  printf("Incoming connection from %s:%d\n", ipstr, port);
+
+  return 0;
 }
 
 /*
@@ -164,6 +175,12 @@ serialized_message* recv_data(const int socket_fd) {
   if (s_message == NULL) {
     return NULL;
   }
+
+  printf("recv_data() | got: ");
+  for (size_t i = 0; i < s_message->len; i++) {
+    printf("%c", s_message->data[i]);
+  }
+  printf("\n");
 
   return s_message;
 }
