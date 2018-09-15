@@ -54,3 +54,7 @@ dkms.conf
 # Binaries
 serialized_data.bin
 bin/*
+
+# vscode config
+.vscode/
+.vscode/*.*
