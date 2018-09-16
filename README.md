@@ -29,3 +29,4 @@ See `PROTOCOL.md`.
 - [Brian "Beej Jorgensen" Hall](https://beej.us/guide/bgnet/html/multi/index.html) for his immortal guide to
 network programming; I copied some of his code snippets for my initial
 networking-related functions.
+- [rxi](https://github.com/rxi/log.c)'s logging library
