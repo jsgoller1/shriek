@@ -16,6 +16,7 @@
 #include <unistd.h>
 
 #include "connection_pool.h"
+#include "log.h"
 #include "serialization.h"
 #include "shriek_types.h"
 #include "sockets.h"
@@ -72,12 +73,12 @@ ssize_t socket_listen(const char* const address, const char* const port) {
 
   if (listen(socket_fd, MAX_CONNECTION_BACKLOG) == -1) {
     close(socket_fd);
-    fprintf(stderr, "socket_listen() | failed to listen\n");
+    log_error("socket_listen() | failed to listen\n", NULL);
     freeaddrinfo(servinfo);
     return -1;
   }
 
-  pool_add(socket_fd, true);
+  pool_add(socket_fd, LISTENING);
   freeaddrinfo(servinfo);
   return 0;
 }
@@ -95,14 +96,14 @@ ssize_t socket_connect(const char* const address, const char* const port) {
     return -1;
   }
 
-  if (connect(socket_fd, servinfo->ai_addr, servinfo->ai_addrlen) == -1) {
+  if (connect(socket_fd, servinfo->ai_addr, servinfo->ai_addrlen) != 0) {
     close(socket_fd);
-    fprintf(stderr, "socket_connect() | failed to connect\n");
+    log_trace("socket_connect() | failed to connect\n");
     freeaddrinfo(servinfo);
     return -1;
   }
 
-  pool_add(socket_fd, false);
+  pool_add(socket_fd, NON_LISTENING);
   freeaddrinfo(servinfo);
   return 0;
 }
@@ -113,11 +114,12 @@ ssize_t socket_connect(const char* const address, const char* const port) {
  * https://stackoverflow.com/questions/2064636/getting-the-source-address-of-an-incoming-socket-connection
  */
 ssize_t socket_accept(const int listener_socket_fd) {
-  struct sockaddr_storage addr = {0};
+  struct sockaddr_storage addr;
   socklen_t len = sizeof(addr);
   char ipstr[INET6_ADDRSTRLEN] = {0};
   int port = 0;
 
+  memset(&addr, 0, sizeof(struct sockaddr_storage));
   int new_socket_fd = accept(listener_socket_fd, (struct sockaddr*)&addr, &len);
 
   if (new_socket_fd == -1) {
@@ -125,7 +127,7 @@ ssize_t socket_accept(const int listener_socket_fd) {
     return -1;
   }
 
-  if (pool_add(new_socket_fd, false) == -1) {
+  if (pool_add(new_socket_fd, NON_LISTENING) == -1) {
     fprintf(stderr, "Couldn't add incoming connection to pool.\n");
     cleanup_socket(new_socket_fd);
   }

@@ -30,6 +30,7 @@ int main(int argc, char** argv) {
       if (send_message(GET, SERVER_CONNECTION_ID, key, NULL) == 0) {
         reply = recv_message();
         printf("%s\n", reply->key);
+        free_message(reply);
       }
     } else if (sscanf(linep, "set %s %s", key, value) == 2) {
       if (send_message(SET, SERVER_CONNECTION_ID, key, value) == 0) {
@@ -38,6 +39,7 @@ int main(int argc, char** argv) {
           printf("OK\n");
         } else {
           printf("ERROR\n");
+          free_message(reply);
         }
       }
     } else if (strcmp(linep, "exit\n") == 0) {
@@ -47,7 +49,6 @@ int main(int argc, char** argv) {
       printf("Invalid command.\n");
     }
     printf("> ");
-    free_message(reply);
   }
 
   cleanup_client(config, linep, key, value);

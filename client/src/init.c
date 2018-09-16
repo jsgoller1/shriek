@@ -9,6 +9,7 @@
 #include "client.h"
 #include "config.h"
 #include "connection_pool.h"
+#include "log.h"
 #include "shriek_types.h"
 #include "sockets.h"
 
@@ -38,25 +39,26 @@ ssize_t initialize_client(configuration* const config, char** linep, char** key,
 
   // Null pointer checks
   if (!(config->address && config->port && *linep && *key && *value)) {
-    fprintf(stderr, "initialize_client() | Memory error. Quitting...");
+    log_error("initialize_client() | Memory error. Quitting...");
     cleanup_client(config, *linep, *key, *value);
     return -1;
   }
 
   // Initiate connection to server
   if (initialize_connection_pool(1) == -1) {
-    fprintf(stderr,
-            "initialize_client() | couldn't initialize connection pool.\n");
+    log_error("initialize_client() | couldn't initialize connection pool.\n");
     cleanup_client(config, *linep, *key, *value);
     return -1;
   }
 
   if (socket_connect(config->address, config->port) == -1) {
-    fprintf(stderr, "initialize_client() | couldn't connect to server.\n");
+    log_error("Error: couldn't connect to %s:%s. Quitting...\n",
+              config->address, config->port);
     cleanup_client(config, *linep, *key, *value);
     return -1;
   }
 
+  log_trace("Connected to %s:%s", config->address, config->port);
   return 0;
 }
 

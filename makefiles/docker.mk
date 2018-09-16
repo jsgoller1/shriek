@@ -19,7 +19,8 @@ container:
 
 docker-install:
 	docker exec $(CONTAINER_NAME) apt-get update
-	docker exec $(CONTAINER_NAME) apt-get install -y make valgrind clang clang-tools cdecl perl bsdmainutils netcat
+	docker exec $(CONTAINER_NAME) apt-get install -y make valgrind clang clang-tools cdecl perl bsdmainutils netcat net-tools
+	docker exec $(CONTAINER_NAME)
 
 shell:
 	docker exec -it $(CONTAINER_NAME) /bin/bash

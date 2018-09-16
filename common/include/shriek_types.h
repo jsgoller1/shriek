@@ -23,6 +23,10 @@
 #define MAX_VAL_SIZE KB(100)
 #endif
 
+// for pool_add()
+#define LISTENING true
+#define NON_LISTENING false
+
 enum action_type {
   REPLY,
   SET,

@@ -77,6 +77,10 @@ ssize_t pool_add(const int socket_fd, bool listening) {
     }
     // couldn't find an open slot
     if (i == pool_size) {
+#ifdef DEBUG
+      fprintf(stderr,
+              "pool_add() | couldn't find open slot in connection pool.\n");
+#endif
       return -1;
     }
   }
@@ -85,7 +89,9 @@ ssize_t pool_add(const int socket_fd, bool listening) {
   connection_pool[i].fd = socket_fd;
   connection_pool[i].events = (POLLIN);
   connection_pool[i].revents = (short)0;
+#ifdef DEBUG
   printf("pool_add() | installed connection at connection_pool[%lu]\n", i);
+#endif
   return 0;
 }
 
