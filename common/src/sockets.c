@@ -36,20 +36,19 @@ int initialize_socket(const char* const address, const char* const port,
   hints.ai_socktype = SOCK_STREAM;
 
   if ((rv = getaddrinfo(address, port, &hints, servinfo)) != 0) {
-    fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
+    log_trace("getaddrinfo failure: %s\n", gai_strerror(rv));
     return -1;
   }
 
   for (p = *servinfo; p != NULL; p = p->ai_next) {
     socket_fd = socket(p->ai_family, p->ai_socktype, p->ai_protocol);
     if (socket_fd != -1) {
-      bind(socket_fd, p->ai_addr, p->ai_addrlen);
+      log_trace("found usable socket fd: %d", socket_fd);
       return socket_fd;
     }
   }
 
-  fprintf(stderr, "initialize_socket() | failed to create socket to %s:%s\n",
-          address, port);
+  log_trace("failed to create socket to %s:%s", address, port);
   return -1;
 }
 
@@ -63,23 +62,38 @@ void cleanup_socket(int sockfd) { close(sockfd); }
  * creating a socket and adding it to the connection pool
  */
 ssize_t socket_listen(const char* const address, const char* const port) {
-  struct addrinfo* servinfo = {0};
+  struct addrinfo servinfo = {0};
+  struct addrinfo* p_servinfo = &servinfo;
+  p_servinfo->ai_flags = AI_PASSIVE;
 
-  int socket_fd = initialize_socket(address, port, &servinfo);
+  int socket_fd = initialize_socket(address, port, &p_servinfo);
   if (socket_fd == -1) {
-    freeaddrinfo(servinfo);
+    freeaddrinfo(p_servinfo);
+    return -1;
+  }
+
+  if (bind(socket_fd, p_servinfo->ai_addr, p_servinfo->ai_addrlen) == -1) {
+    cleanup_socket(socket_fd);
+    log_trace("failed to bind()\n");
+    freeaddrinfo(p_servinfo);
     return -1;
   }
 
   if (listen(socket_fd, MAX_CONNECTION_BACKLOG) == -1) {
-    close(socket_fd);
-    log_error("socket_listen() | failed to listen\n", NULL);
-    freeaddrinfo(servinfo);
+    cleanup_socket(socket_fd);
+    log_trace("failed to listen()\n");
+    freeaddrinfo(p_servinfo);
     return -1;
   }
 
-  pool_add(socket_fd, LISTENING);
-  freeaddrinfo(servinfo);
+  if (pool_add(socket_fd, LISTENING) == -1) {
+    cleanup_socket(socket_fd);
+    freeaddrinfo(p_servinfo);
+    return -1;
+  }
+
+  freeaddrinfo(p_servinfo);
+  log_trace("successfully added listening socket to pool.");
   return 0;
 }
 
@@ -98,13 +112,19 @@ ssize_t socket_connect(const char* const address, const char* const port) {
 
   if (connect(socket_fd, servinfo->ai_addr, servinfo->ai_addrlen) != 0) {
     close(socket_fd);
-    log_trace("socket_connect() | failed to connect\n");
+    log_trace("failed to connect to %s:%s\n", address, port);
     freeaddrinfo(servinfo);
     return -1;
   }
 
-  pool_add(socket_fd, NON_LISTENING);
+  if (pool_add(socket_fd, NON_LISTENING) == -1) {
+    cleanup_socket(socket_fd);
+    freeaddrinfo(servinfo);
+    return -1;
+  }
+
   freeaddrinfo(servinfo);
+  log_trace("successfully connected to %s:%s\n", address, port);
   return 0;
 }
 
@@ -123,19 +143,19 @@ ssize_t socket_accept(const int listener_socket_fd) {
   int new_socket_fd = accept(listener_socket_fd, (struct sockaddr*)&addr, &len);
 
   if (new_socket_fd == -1) {
-    fprintf(stderr, "Couldn't accept incoming connection.\n");
+    log_trace("couldn't accept incoming connection.");
     return -1;
   }
 
   if (pool_add(new_socket_fd, NON_LISTENING) == -1) {
-    fprintf(stderr, "Couldn't add incoming connection to pool.\n");
     cleanup_socket(new_socket_fd);
+    return -1;
   }
 
   struct sockaddr_in* s_in = (struct sockaddr_in*)&addr;
   port = ntohs(s_in->sin_port);
   inet_ntop(AF_INET, &(s_in->sin_addr), ipstr, sizeof(ipstr));
-  printf("Incoming connection from %s:%d\n", ipstr, port);
+  log_info("Incoming connection from %s:%d", ipstr, port);
 
   return 0;
 }
@@ -143,17 +163,25 @@ ssize_t socket_accept(const int listener_socket_fd) {
 /*
  * send_data(): send a serialized message to a socket
  */
-ssize_t send_data(const serialized_message* const s_message) {
+ssize_t send_data(const int socket_fd,
+                  const serialized_message* const s_message) {
   if (s_message == NULL) {
     return -1;
   }
 
   // TODO: this may result in partial sends
   // TODO: convert to network byte order
-  ssize_t reply =
-      send((int)s_message->connection_id, s_message->data, s_message->len, 0);
-
-  return reply;
+  ssize_t len = send(socket_fd, s_message->data, s_message->len, 0);
+  if (len == -1) {
+    perror("send()");
+  } else {
+    log_trace("Sent %ld bytes", len);
+    for (size_t i = 0; i < s_message->len; i++) {
+      printf("%c", s_message->data[i]);
+    }
+    printf("\n");
+  }
+  return len;
 }
 
 /*
@@ -175,12 +203,12 @@ serialized_message* recv_data(const int socket_fd) {
   }
 
   serialized_message* s_message =
-      alloc_serialized_message(socket_fd, data, (size_t)len);
+      alloc_serialized_message(-1, data, (size_t)len);
   if (s_message == NULL) {
     return NULL;
   }
 
-  printf("recv_data() | got: ");
+  log_trace("recieved %ld bytes", len);
   for (size_t i = 0; i < s_message->len; i++) {
     printf("%c", s_message->data[i]);
   }

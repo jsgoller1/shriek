@@ -2,7 +2,7 @@
 
 #include "shriek_types.h"
 
-#define POLL_TIMEOUT_PERIOD -1
+#define POLL_TIMEOUT_PERIOD 10
 
 ssize_t initialize_connection_pool(const size_t size);
 void cleanup_connection_pool(void);

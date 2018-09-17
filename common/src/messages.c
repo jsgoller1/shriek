@@ -9,6 +9,7 @@
 #include <string.h>
 
 #include "connection_pool.h"
+#include "log.h"
 #include "messages.h"
 #include "serialization.h"
 #include "shriek_types.h"
@@ -89,6 +90,7 @@ ssize_t send_message(enum action_type action, ssize_t connection_id,
 message* recv_message() {
   serialized_message* s_message = pool_listen();
   if (s_message == NULL) {
+    log_trace("recv'd message is null.");
     return NULL;
   }
 

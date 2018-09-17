@@ -13,4 +13,5 @@ ssize_t socket_connect(const char* const addr, const char* const port);
 ssize_t socket_accept(const int listener_socket_fd);
 
 serialized_message* recv_data(const int socket_fd);
-ssize_t send_data(const serialized_message* const s_message);
+ssize_t send_data(const int socket_fd,
+                  const serialized_message* const s_message);
