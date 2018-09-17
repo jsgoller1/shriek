@@ -12,7 +12,7 @@
  */
 int main(int argc, char** argv) {
   hashtable_entry** ht = NULL;
-  message* sent = NULL;
+  message* new_message = NULL;
   char *reply_key = NULL, *reply_value = NULL;
 
   // Setup
@@ -25,19 +25,23 @@ int main(int argc, char** argv) {
     return -1;
   }
 
-  printf("Started Shriek server on %s:%s.\n", config->address, config->port);
-  while ((sent = recv_message()) != NULL) {
-    if (sent->action == GET) {
-      reply_value = hash_get(ht, sent->key);
-      log_trace("Looked up %s, got %s", sent->key, reply_value);
-      send_message(REPLY, sent->connection_id, sent->key, reply_value);
-    } else if (sent->action == SET) {
-      hash_set(ht, sent->key, sent->value);
-      reply_key = "0";
-      send_message(REPLY, sent->connection_id, reply_key, NULL);
-      log_trace("Set %s to %s", sent->key, sent->value);
+  log_info("Started Shriek server on %s:%s.", config->address, config->port);
+  while ((new_message = recv_message())) {
+    if (new_message == NULL) {
+      continue;
     }
-    free_message(sent);
+    if (new_message->action == GET) {
+      reply_value = hash_get(ht, new_message->key);
+      log_trace("Looked up %s, got %s", new_message->key, reply_value);
+      send_message(REPLY, new_message->connection_id, new_message->key,
+                   reply_value);
+    } else if (new_message->action == SET) {
+      hash_set(ht, new_message->key, new_message->value);
+      reply_key = "0";
+      send_message(REPLY, new_message->connection_id, reply_key, NULL);
+      log_trace("Set %s to %s", new_message->key, new_message->value);
+    }
+    free_message(new_message);
   }
 
   cleanup_server(config, ht);

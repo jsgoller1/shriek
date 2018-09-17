@@ -17,7 +17,7 @@
 #include "log.h"
 #include "sockets.h"
 
-static bool pool_listener = false;
+static bool pool_has_listener = false;
 static size_t pool_size = 0;
 static struct pollfd* connection_pool = NULL;
 
@@ -40,7 +40,6 @@ ssize_t initialize_connection_pool(const size_t size) {
     connection_pool[i].fd = -1;
   }
 
-  log_trace("Initialized connection pool with %d slots.", pool_size);
   return 0;
 }
 
@@ -69,7 +68,7 @@ ssize_t pool_add(const int socket_fd, bool listening) {
     if (connection_pool[0].fd != -1) {
       pool_remove(connection_pool[0].fd);
     }
-    pool_listener = true;
+    pool_has_listener = true;
   }
   // scan for open slot in the pool, return an error if none available
   while (i < pool_size) {
@@ -106,38 +105,37 @@ void pool_remove(const int socket_fd) {
  * multiple sockets; if a listener socket is present and
  * ready, initiate new connections and add them to the pool.
  * For other sockets, read data from them into a serialized
- * message string. Returns a linked list of serialized messages that
- * must be deserialized.
+ * message string.
  */
 serialized_message* pool_listen(void) {
-  log_trace("beginning pool listen.");
   while (poll(connection_pool, (nfds_t)pool_size, POLL_TIMEOUT_PERIOD) != -1) {
-    // if we are listening for new connections, accept them and
-    // add them to the pool
-    if (pool_listener && (connection_pool[0].revents && POLLIN)) {
-      if (socket_accept(connection_pool[0].fd) == -1) {
-        log_warn("couldn't accept incoming connection.");
-      } else {
-        // log_trace("accepted incoming connection.");
-      }
+    // check listening socket, if present
+    if (pool_has_listener && (connection_pool[0].revents & POLLIN)) {
+      socket_accept(connection_pool[0].fd);
       connection_pool[0].revents = 0;
     }
-    // Otherwise, get first ready socket; knock out any
-    // closed sockets we find
+
+    // check remaining sockets; close any hung-up ones we find. If
+    // an s_message is NULL, it means either recv() threw an error or
+    // returned 0 bytes. In either case, close the socket.
     for (size_t i = 1; i < pool_size; i++) {
-      if (connection_pool[i].revents & POLLIN) {
-        serialized_message* s_message = recv_data(connection_pool[i].fd);
-        s_message->connection_id = (ssize_t)i;
-        connection_pool[i].revents = 0;
-        return s_message;
-      }
       if (connection_pool[i].revents & (POLLHUP | POLLNVAL | POLLERR)) {
-        log_trace("found hung up socket at connection_pool[%lu], removing.", i);
         pool_remove(connection_pool[i].fd);
+      } else if (connection_pool[i].revents && POLLIN) {
+        serialized_message* s_message = recv_data(connection_pool[i].fd);
+        if (s_message == NULL) {
+          pool_remove(connection_pool[i].fd);
+        } else {
+          s_message->connection_id = (ssize_t)i;
+          connection_pool[i].revents = 0;
+          return s_message;
+        }
       }
     }
   }
 
+  // Poll threw some error
+  perror("poll()");
   return NULL;
 }
 
@@ -145,7 +143,6 @@ serialized_message* pool_listen(void) {
  * pool_send(): send data to one of the connections in the pool.
  */
 ssize_t pool_send(serialized_message* s_message) {
-  log_trace("Sending message.");
   int socket_fd = connection_pool[s_message->connection_id].fd;
   return send_data(socket_fd, s_message);
 }

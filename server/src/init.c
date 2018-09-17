@@ -29,13 +29,13 @@ ssize_t initialize_server(configuration* const config, hashtable_entry*** ht) {
 
   // Initiate listener
   if (initialize_connection_pool(MAX_CONNECTIONS) == -1) {
-    log_trace("couldn't initialize connection pool.\n");
+    log_error("couldn't initialize connection pool.\n");
     cleanup_server(config, *ht);
     return -1;
   }
 
   if (socket_listen(config->address, config->port) == -1) {
-    log_trace("couldn't open listen at %s:%s.", config->address, config->port);
+    log_error("couldn't listen at %s:%s.", config->address, config->port);
     cleanup_server(config, *ht);
     return -1;
   }

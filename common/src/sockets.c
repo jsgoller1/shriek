@@ -43,7 +43,6 @@ int initialize_socket(const char* const address, const char* const port,
   for (p = *servinfo; p != NULL; p = p->ai_next) {
     socket_fd = socket(p->ai_family, p->ai_socktype, p->ai_protocol);
     if (socket_fd != -1) {
-      log_trace("found usable socket fd: %d", socket_fd);
       return socket_fd;
     }
   }
@@ -58,13 +57,43 @@ int initialize_socket(const char* const address, const char* const port,
 void cleanup_socket(int sockfd) { close(sockfd); }
 
 /*
+ * get_connected_host(): given a file descriptor,
+ * get its associated host IP and port number.
+ */
+char* get_connected_host(const int socket_fd) {
+  struct sockaddr_storage addr;
+  struct sockaddr* saddr = (struct sockaddr*)(&addr);
+  struct sockaddr_in* saddr_in = (struct sockaddr_in*)(&addr);
+  socklen_t saddr_len = sizeof(saddr);
+  char ip_str[INET6_ADDRSTRLEN] = {0};
+  char* address_str = NULL;
+  int port = 0;
+
+  memset(&addr, 0, sizeof(addr));
+  getpeername(socket_fd, saddr, &saddr_len);
+
+  port = ntohs(saddr_in->sin_port);
+  inet_ntop(AF_INET, &(saddr_in->sin_addr), ip_str, sizeof(ip_str));
+
+  // port length is never more than 6 chars; allocate extra for ":"
+  address_str = calloc(1, strlen(ip_str) + 7);
+  if (address_str == NULL) {
+    return NULL;
+  }
+  sprintf(address_str, "%s:%d", ip_str, port);
+  return address_str;
+}
+
+/*
  * socket_listen() - begin listening for incoming connections by
  * creating a socket and adding it to the connection pool
  */
 ssize_t socket_listen(const char* const address, const char* const port) {
-  struct addrinfo servinfo = {0};
+  struct addrinfo servinfo;
+  memset(&servinfo, 0, sizeof(servinfo));
   struct addrinfo* p_servinfo = &servinfo;
   p_servinfo->ai_flags = AI_PASSIVE;
+  int yes = 1;
 
   int socket_fd = initialize_socket(address, port, &p_servinfo);
   if (socket_fd == -1) {
@@ -72,16 +101,27 @@ ssize_t socket_listen(const char* const address, const char* const port) {
     return -1;
   }
 
-  if (bind(socket_fd, p_servinfo->ai_addr, p_servinfo->ai_addrlen) == -1) {
+  // Allow socket address reuse so bind doesn't fail while kernel cleans up
+  // previous runs. "yes" is the setting for the option.
+  if (setsockopt(socket_fd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes)) ==
+      -1) {
+    log_trace("failed to set socket options.");
     cleanup_socket(socket_fd);
-    log_trace("failed to bind()\n");
+
+    freeaddrinfo(p_servinfo);
+    return -1;
+  }
+
+  if (bind(socket_fd, p_servinfo->ai_addr, p_servinfo->ai_addrlen) == -1) {
+    log_trace("failed to bind()");
+    cleanup_socket(socket_fd);
     freeaddrinfo(p_servinfo);
     return -1;
   }
 
   if (listen(socket_fd, MAX_CONNECTION_BACKLOG) == -1) {
+    log_trace("failed to listen()");
     cleanup_socket(socket_fd);
-    log_trace("failed to listen()\n");
     freeaddrinfo(p_servinfo);
     return -1;
   }
@@ -93,7 +133,6 @@ ssize_t socket_listen(const char* const address, const char* const port) {
   }
 
   freeaddrinfo(p_servinfo);
-  log_trace("successfully added listening socket to pool.");
   return 0;
 }
 
@@ -124,7 +163,6 @@ ssize_t socket_connect(const char* const address, const char* const port) {
   }
 
   freeaddrinfo(servinfo);
-  log_trace("successfully connected to %s:%s\n", address, port);
   return 0;
 }
 
@@ -136,27 +174,29 @@ ssize_t socket_connect(const char* const address, const char* const port) {
 ssize_t socket_accept(const int listener_socket_fd) {
   struct sockaddr_storage addr;
   socklen_t len = sizeof(addr);
-  char ipstr[INET6_ADDRSTRLEN] = {0};
-  int port = 0;
+  char* address_string;
 
   memset(&addr, 0, sizeof(struct sockaddr_storage));
   int new_socket_fd = accept(listener_socket_fd, (struct sockaddr*)&addr, &len);
+  address_string = get_connected_host(new_socket_fd);
 
   if (new_socket_fd == -1) {
-    log_trace("couldn't accept incoming connection.");
+    log_error("couldn't accept incoming connection from %s", address_string);
+    free(address_string);
     return -1;
   }
 
   if (pool_add(new_socket_fd, NON_LISTENING) == -1) {
+    log_error("too many connections; rejecting incoming connection from %s ",
+              address_string);
     cleanup_socket(new_socket_fd);
+    free(address_string);
+
     return -1;
   }
 
-  struct sockaddr_in* s_in = (struct sockaddr_in*)&addr;
-  port = ntohs(s_in->sin_port);
-  inet_ntop(AF_INET, &(s_in->sin_addr), ipstr, sizeof(ipstr));
-  log_info("Incoming connection from %s:%d", ipstr, port);
-
+  log_info("Incoming connection from %s", address_string);
+  free(address_string);
   return 0;
 }
 
@@ -174,12 +214,6 @@ ssize_t send_data(const int socket_fd,
   ssize_t len = send(socket_fd, s_message->data, s_message->len, 0);
   if (len == -1) {
     perror("send()");
-  } else {
-    log_trace("Sent %ld bytes", len);
-    for (size_t i = 0; i < s_message->len; i++) {
-      printf("%c", s_message->data[i]);
-    }
-    printf("\n");
   }
   return len;
 }
@@ -195,9 +229,17 @@ serialized_message* recv_data(const int socket_fd) {
     return NULL;
   }
 
-  // TODO: convert from network byte order
   len = recv(socket_fd, data, KB(300), 0);
   if (len == -1) {
+    log_error("recv error.");
+    free(data);
+    return NULL;
+  }
+
+  if (len == 0) {
+    char* address_string = get_connected_host(socket_fd);
+    log_info("%s disconnected.", address_string);
+    free(address_string);
     free(data);
     return NULL;
   }
@@ -205,14 +247,9 @@ serialized_message* recv_data(const int socket_fd) {
   serialized_message* s_message =
       alloc_serialized_message(-1, data, (size_t)len);
   if (s_message == NULL) {
+    free(data);
     return NULL;
   }
-
-  log_trace("recieved %ld bytes", len);
-  for (size_t i = 0; i < s_message->len; i++) {
-    printf("%c", s_message->data[i]);
-  }
-  printf("\n");
 
   return s_message;
 }
