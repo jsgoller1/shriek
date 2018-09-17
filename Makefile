@@ -43,5 +43,7 @@ tests: clean
 	$(COMPILE) -I $@/include/ $@/log_test.c -o bin/log_test
 	$(VALGRIND) ./bin/log_test
 
+tcpdump:
+	tcpdump -i lo -v -X -w capture.cap
 
 shriek: clean client server
