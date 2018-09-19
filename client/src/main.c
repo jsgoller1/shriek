@@ -40,8 +40,8 @@ int main(int argc, char** argv) {
           printf("OK\n");
         } else {
           printf("ERROR\n");
-          free_message(reply);
         }
+        free_message(reply);
       }
     } else if (strcmp(linep, "exit\n") == 0) {
       printf("Quitting...\n");
