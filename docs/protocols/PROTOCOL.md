@@ -1,4 +1,4 @@
-Shriek protocol
+Shriek v1 protocol
 ---
 # Encoding format
 Shriek adopts an encoding format starting with v1. In this encoding format, there are
@@ -14,9 +14,6 @@ VERSION (2 bytes)
 followed by any number of
 TYPE (1 byte) | LENGTH (3 bytes) | DATA (0 to 2^24 bytes)
 ```
-
-
-# Protocol versions
 
 ## v0
 The v0 protocol is a stateless protocol. The only requirement
