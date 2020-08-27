@@ -1,5 +1,5 @@
 # shriek
-A distributed key-value store. This was implemented for the [Bradfield School of Computer Science Distributed Systems](https://bradfieldcs.com/courses/distributed-systems/) class.
+A networked key-value store. This was implemented for the [Bradfield School of Computer Science Distributed Systems](https://bradfieldcs.com/courses/distributed-systems/) class.
 
 ## Demo
 ```
